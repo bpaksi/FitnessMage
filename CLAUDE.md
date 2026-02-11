@@ -74,9 +74,11 @@
 
 ## Environment Variables
 
+All env vars are server-only (no `NEXT_PUBLIC_` prefix). No client-side DB calls — everything goes through Next.js API routes.
+
 ```
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54361
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon key>
+SUPABASE_URL=http://127.0.0.1:54361
+SUPABASE_PUBLISHABLE_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=<service role key>
 ```
 

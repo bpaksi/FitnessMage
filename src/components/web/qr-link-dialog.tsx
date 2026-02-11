@@ -49,12 +49,6 @@ export function QrLinkDialog({
     setErrorMsg('')
   }, [])
 
-  const closeDialog = useCallback(() => {
-    setOpen(false)
-    if (linked) onDeviceLinked?.()
-    resetState()
-  }, [setOpen, linked, onDeviceLinked, resetState])
-
   function handleCodeChange(value: string) {
     const filtered = value.toUpperCase().match(VALID_CHARS)?.join('') || ''
     setCodeInput(filtered.slice(0, 6))
@@ -106,7 +100,7 @@ export function QrLinkDialog({
   }
 
   const baseUrl = typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_APP_URL || window.location.origin)
+    ? window.location.origin
     : ''
   const linkUrl = `${baseUrl}/link`
 
