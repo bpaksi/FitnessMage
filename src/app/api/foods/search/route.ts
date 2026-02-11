@@ -77,11 +77,44 @@ export async function GET(request: Request) {
         if (data) results.push(data)
       }
       if (withoutBarcode.length > 0) {
-        const { data } = await admin
+        // Deduplicate: find which foods already exist by (name, brand, source)
+        const names = withoutBarcode.map((f) => f.name)
+        const { data: existing } = await admin
           .from('foods')
-          .insert(withoutBarcode)
-          .select()
-        if (data) results.push(data)
+          .select('name, brand')
+          .eq('source', 'usda')
+          .is('user_id', null)
+          .in('name', names)
+
+        const existingKeys = new Set(
+          (existing ?? []).map(
+            (f: { name: string; brand: string | null }) =>
+              `${f.name.toLowerCase()}|${(f.brand ?? '').toLowerCase()}`,
+          ),
+        )
+
+        const toInsert = withoutBarcode.filter(
+          (f) => !existingKeys.has(`${f.name.toLowerCase()}|${(f.brand ?? '').toLowerCase()}`),
+        )
+
+        if (toInsert.length > 0) {
+          const { data } = await admin
+            .from('foods')
+            .insert(toInsert)
+            .select()
+          if (data) results.push(data)
+        }
+
+        // Also return already-cached foods so they appear in results
+        if (existing && existing.length > 0) {
+          const { data: cachedFoods } = await admin
+            .from('foods')
+            .select('*')
+            .eq('source', 'usda')
+            .is('user_id', null)
+            .in('name', existing.map((f: { name: string }) => f.name))
+          if (cachedFoods) results.push(cachedFoods)
+        }
       }
 
       cachedUSDA = results.flat()
