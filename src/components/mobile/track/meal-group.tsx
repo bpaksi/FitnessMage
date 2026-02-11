@@ -23,10 +23,9 @@ interface MealGroupProps {
   mealType: MealType
   entries: DailyLogEntry[]
   children: React.ReactNode
-  onCopyMeal?: () => void
 }
 
-export function MealGroup({ mealType, entries, children, onCopyMeal }: MealGroupProps) {
+export function MealGroup({ mealType, entries, children }: MealGroupProps) {
   const [open, setOpen] = useState(true)
 
   const totalCals = entries.reduce((sum, e) => sum + Number(e.calories), 0)
@@ -53,29 +52,9 @@ export function MealGroup({ mealType, entries, children, onCopyMeal }: MealGroup
       </CollapsibleTrigger>
       <CollapsibleContent>
         {entries.length === 0 ? (
-          <div className="flex items-center justify-between px-3 py-4">
-            <p className="text-xs text-[#475569]">Nothing logged for {MEAL_LABELS[mealType]}</p>
-            {onCopyMeal && (
-              <button
-                onClick={onCopyMeal}
-                className="text-xs text-[#3b82f6] hover:text-[#60a5fa]"
-              >
-                Copy from...
-              </button>
-            )}
-          </div>
+          <p className="px-3 py-4 text-xs text-[#475569]">Nothing logged for {MEAL_LABELS[mealType]}</p>
         ) : (
-          <div>
-            {children}
-            {onCopyMeal && (
-              <button
-                onClick={onCopyMeal}
-                className="mt-1 block w-full px-3 py-2 text-left text-xs text-[#3b82f6] hover:text-[#60a5fa]"
-              >
-                Copy from...
-              </button>
-            )}
-          </div>
+          <div>{children}</div>
         )}
       </CollapsibleContent>
     </Collapsible>

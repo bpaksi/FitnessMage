@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useMobileContext } from '@/contexts/mobile-context'
 import { useDailyLog } from '@/hooks/use-daily-log'
@@ -39,7 +40,7 @@ export default function TrackPage() {
   const [editingEntry, setEditingEntry] = useState<DailyLogEntry | null>(null)
   const [editingFood, setEditingFood] = useState<DailyLogEntry | null>(null)
   const [deletingEntry, setDeletingEntry] = useState<DailyLogEntry | null>(null)
-  const [copyMealType, setCopyMealType] = useState<MealType | null>(null)
+  const [copyOpen, setCopyOpen] = useState(false)
 
   const groupedEntries = MEAL_ORDER.reduce(
     (acc, meal) => {
@@ -109,9 +110,9 @@ export default function TrackPage() {
   )
 
   const handleCopyMeal = useCallback(
-    async (sourceDate: string, sourceMealType: MealType) => {
+    async (sourceDate: string, sourceMealType: MealType, targetMealType: MealType) => {
       vibrate()
-      setCopyMealType(null)
+      setCopyOpen(false)
 
       await apiClient('/api/log/copy', {
         method: 'POST',
@@ -119,7 +120,7 @@ export default function TrackPage() {
           sourceDate,
           sourceMealType,
           targetDate: selectedDate,
-          targetMealType: copyMealType,
+          targetMealType,
         },
       })
 
@@ -127,7 +128,7 @@ export default function TrackPage() {
       mutateSummary()
       toast.success('Meal copied')
     },
-    [selectedDate, copyMealType, mutateLog, mutateSummary],
+    [selectedDate, mutateLog, mutateSummary],
   )
 
   return (
@@ -136,7 +137,16 @@ export default function TrackPage() {
         className="space-y-3 px-4 pt-4"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
       >
-        <h1 className="text-lg font-medium text-[#f8fafc]">Track</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-medium text-[#f8fafc]">Track</h1>
+          <button
+            onClick={() => setCopyOpen(true)}
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-[#3b82f6] transition-colors active:bg-[#0f172a]"
+          >
+            <Copy size={14} />
+            <span>Copy from</span>
+          </button>
+        </div>
         <DatePicker />
       </header>
 
@@ -154,7 +164,6 @@ export default function TrackPage() {
                 key={meal}
                 mealType={meal}
                 entries={groupedEntries[meal]}
-                onCopyMeal={() => setCopyMealType(meal)}
               >
                 {groupedEntries[meal].map((entry) => (
                   <FoodLogItem
@@ -189,15 +198,12 @@ export default function TrackPage() {
         }}
       />
 
-      {copyMealType && (
-        <CopyMealSheet
-          targetDate={selectedDate}
-          targetMealType={copyMealType}
-          open={!!copyMealType}
-          onClose={() => setCopyMealType(null)}
-          onCopy={handleCopyMeal}
-        />
-      )}
+      <CopyMealSheet
+        targetDate={selectedDate}
+        open={copyOpen}
+        onClose={() => setCopyOpen(false)}
+        onCopy={handleCopyMeal}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deletingEntry} onOpenChange={(o) => !o && setDeletingEntry(null)}>
