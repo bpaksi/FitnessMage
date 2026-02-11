@@ -67,3 +67,32 @@ export async function PUT(
     return unauthorized()
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { userId } = await resolveUser(request)
+    const { id } = await params
+    const admin = createAdminClient()
+
+    // Verify ownership and manual source
+    const { data: existing } = await admin
+      .from('foods')
+      .select('user_id, source')
+      .eq('id', id)
+      .single()
+
+    if (!existing) return error('Food not found', 404)
+    if (existing.user_id !== userId) return error('Not authorized', 403)
+    if (existing.source !== 'manual') return error('Can only delete custom foods', 400)
+
+    const { error: dbError } = await admin.from('foods').delete().eq('id', id)
+
+    if (dbError) return error(dbError.message)
+    return ok({ success: true })
+  } catch {
+    return unauthorized()
+  }
+}
