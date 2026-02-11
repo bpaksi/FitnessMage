@@ -4,6 +4,7 @@ import { useMobileContext } from '@/contexts/mobile-context'
 import { useDailySummary } from '@/hooks/use-daily-summary'
 import { BottomNav } from '@/components/mobile/bottom-nav'
 import { MacroProgressBar } from '@/components/mobile/macro-progress-bar'
+import { NutritionDetailsSection } from '@/components/mobile/nutrition-details-section'
 import { DatePicker } from '@/components/mobile/date-picker'
 import { EmptyState } from '@/components/mobile/empty-state'
 import { Sparkles } from 'lucide-react'
@@ -65,6 +66,10 @@ export default function HomePage() {
               color="#eab308"
               unit="g"
             />
+
+            {summary.extendedNutrients && (
+              <NutritionDetailsSection extendedNutrients={summary.extendedNutrients} />
+            )}
           </section>
         ) : (
           <EmptyState

@@ -33,9 +33,18 @@ export interface DailyLogEntry {
   }
 }
 
+export interface ExtendedNutrientSummary {
+  total: number
+  dailyValue: number
+  unit: string
+  label: string
+  color: string
+}
+
 export interface DailySummary {
   date: string
   totals: MacroSnapshot
   goals: MacroSnapshot
   entries: DailyLogEntry[]
+  extendedNutrients: Record<string, ExtendedNutrientSummary>
 }

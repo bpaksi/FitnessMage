@@ -1,6 +1,7 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
+import { EXTENDED_DAILY_VALUES, EXTENDED_NUTRIENT_KEYS } from '@/lib/constants/daily-values'
 
 export async function GET(request: Request) {
   try {
@@ -12,10 +13,14 @@ export async function GET(request: Request) {
 
     const admin = createAdminClient()
 
-    // Get entries
+    // Get entries with extended nutrient data from foods
     const { data: entries, error: logError } = await admin
       .from('daily_log')
-      .select('*, food:foods(id, name, serving_size, brand), meal:meals(id, name, total_servings)')
+      .select(`
+        *,
+        food:foods(id, name, serving_size, brand, fiber, sugar, sodium, saturated_fat, cholesterol),
+        meal:meals(id, name, total_servings, meal_foods(servings, food:foods(fiber, sugar, sodium, saturated_fat, cholesterol)))
+      `)
       .eq('user_id', userId)
       .eq('date', date)
       .order('logged_at', { ascending: true })
@@ -42,6 +47,46 @@ export async function GET(request: Request) {
       { calories: 0, protein: 0, carbs: 0, fat: 0 },
     )
 
+    // Calculate extended nutrient totals
+    const extNutrientTotals: Record<string, number> = {}
+    for (const key of EXTENDED_NUTRIENT_KEYS) {
+      extNutrientTotals[key] = 0
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const getNutrient = (obj: any, key: string): number => Number(obj?.[key]) || 0
+
+    for (const entry of entries || []) {
+      if (entry.food_id && entry.food) {
+        for (const key of EXTENDED_NUTRIENT_KEYS) {
+          extNutrientTotals[key] += getNutrient(entry.food, key) * entry.servings
+        }
+      } else if (entry.meal_id && entry.meal) {
+        const mealFoods = entry.meal.meal_foods || []
+        const scaleFactor = entry.meal.total_servings > 0
+          ? entry.servings / entry.meal.total_servings
+          : 0
+        for (const mf of mealFoods) {
+          if (!mf.food) continue
+          for (const key of EXTENDED_NUTRIENT_KEYS) {
+            extNutrientTotals[key] += getNutrient(mf.food, key) * mf.servings * scaleFactor
+          }
+        }
+      }
+    }
+
+    const extendedNutrients: Record<string, { total: number; dailyValue: number; unit: string; label: string; color: string }> = {}
+    for (const key of EXTENDED_NUTRIENT_KEYS) {
+      const dv = EXTENDED_DAILY_VALUES[key]
+      extendedNutrients[key] = {
+        total: Math.round(extNutrientTotals[key] * 10) / 10,
+        dailyValue: dv.dailyValue,
+        unit: dv.unit,
+        label: dv.label,
+        color: dv.color,
+      }
+    }
+
     return ok({
       date,
       totals: {
@@ -52,6 +97,7 @@ export async function GET(request: Request) {
       },
       goals,
       entries: entries || [],
+      extendedNutrients,
     })
   } catch {
     return unauthorized()
