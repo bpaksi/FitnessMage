@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { getDeviceToken } from '@/lib/mobile/token-store'
 import { MobileProvider } from '@/contexts/mobile-context'
@@ -11,19 +11,20 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
   const router = useRouter()
   const isLinkPage = pathname === '/link'
 
-  const hasToken = useSyncExternalStore(
-    () => () => {},
-    () => getDeviceToken() !== null,
-    () => false,
-  )
+  // null = not yet checked (SSR/hydration), true/false = client-side result
+  const [hasToken, setHasToken] = useState<boolean | null>(null)
 
   useEffect(() => {
-    if (!hasToken && !isLinkPage) {
+    setHasToken(getDeviceToken() !== null)
+  }, [])
+
+  useEffect(() => {
+    if (hasToken === false && !isLinkPage) {
       router.replace('/link')
     }
   }, [hasToken, isLinkPage, router])
 
-  if (!hasToken && !isLinkPage) {
+  if (hasToken === null || (!hasToken && !isLinkPage)) {
     return <div className="min-h-svh bg-[#020817]" />
   }
 
