@@ -118,43 +118,47 @@ export default function AddPage() {
 
   return (
     <div className="flex min-h-svh flex-col pb-20">
-      <header
-        className="space-y-3 px-4 pt-4"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-      >
-        <h1 className="text-lg font-medium text-[#f8fafc]">Add Food</h1>
-        <Select value={mealType} onValueChange={(v) => setMealType(v as MealType)}>
-          <SelectTrigger className="w-full border-[#1e293b] bg-[#0f172a] text-[#f8fafc]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="border-[#1e293b] bg-[#0f172a]">
-            <SelectItem value="breakfast" className="text-[#f8fafc]">Breakfast</SelectItem>
-            <SelectItem value="lunch" className="text-[#f8fafc]">Lunch</SelectItem>
-            <SelectItem value="dinner" className="text-[#f8fafc]">Dinner</SelectItem>
-            <SelectItem value="snack" className="text-[#f8fafc]">Snack</SelectItem>
-          </SelectContent>
-        </Select>
-      </header>
+      {activeTab !== 'scan' && (
+        <header
+          className="space-y-3 px-4 pt-4"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+        >
+          <h1 className="text-lg font-medium text-[#f8fafc]">Add Food</h1>
+          <Select value={mealType} onValueChange={(v) => setMealType(v as MealType)}>
+            <SelectTrigger className="w-full border-[#1e293b] bg-[#0f172a] text-[#f8fafc]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" className="border-[#1e293b] bg-[#0f172a]">
+              <SelectItem value="breakfast" className="text-[#f8fafc]">Breakfast</SelectItem>
+              <SelectItem value="lunch" className="text-[#f8fafc]">Lunch</SelectItem>
+              <SelectItem value="dinner" className="text-[#f8fafc]">Dinner</SelectItem>
+              <SelectItem value="snack" className="text-[#f8fafc]">Snack</SelectItem>
+            </SelectContent>
+          </Select>
+        </header>
+      )}
 
-      <main className="flex-1 px-4 pt-4">
+      <main className="flex-1 px-4 pt-4" style={activeTab === 'scan' ? { paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' } : undefined}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 bg-[#0f172a]">
-            <TabsTrigger value="favorites" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Faves
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Recent
-            </TabsTrigger>
-            <TabsTrigger value="search" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Search
-            </TabsTrigger>
-            <TabsTrigger value="scan" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Scan
-            </TabsTrigger>
-            <TabsTrigger value="manual" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Manual
-            </TabsTrigger>
-          </TabsList>
+          {activeTab !== 'scan' && (
+            <TabsList className="grid w-full grid-cols-5 bg-[#0f172a]">
+              <TabsTrigger value="favorites" className="text-xs data-[state=active]:bg-[#1e293b]">
+                Faves
+              </TabsTrigger>
+              <TabsTrigger value="recent" className="text-xs data-[state=active]:bg-[#1e293b]">
+                Recent
+              </TabsTrigger>
+              <TabsTrigger value="search" className="text-xs data-[state=active]:bg-[#1e293b]">
+                Search
+              </TabsTrigger>
+              <TabsTrigger value="scan" className="text-xs data-[state=active]:bg-[#1e293b]">
+                Scan
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="text-xs data-[state=active]:bg-[#1e293b]">
+                Manual
+              </TabsTrigger>
+            </TabsList>
+          )}
 
           <TabsContent value="favorites" className="mt-3">
             <FavoritesSection
@@ -179,11 +183,12 @@ export default function AddPage() {
 
           <TabsContent value="scan" className="mt-3">
             <ScanTab
-              onAddFood={(food) => addFoodToLog(food)}
+              onAddFood={(food, servings) => addFoodToLog(food, servings)}
               onManualEntry={(barcode) => {
                 setManualBarcode(barcode)
                 setActiveTab('manual')
               }}
+              onCancel={() => setActiveTab('recent')}
             />
           </TabsContent>
 

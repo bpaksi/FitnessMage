@@ -14,11 +14,12 @@ const QrScanner = dynamic(
 )
 
 interface ScanTabProps {
-  onAddFood: (food: Food) => void
+  onAddFood: (food: Food, servings?: number) => void
   onManualEntry: (barcode?: string) => void
+  onCancel: () => void
 }
 
-export function ScanTab({ onAddFood, onManualEntry }: ScanTabProps) {
+export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
   const [scannedFood, setScannedFood] = useState<Food | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -45,18 +46,14 @@ export function ScanTab({ onAddFood, onManualEntry }: ScanTabProps) {
 
   if (scannedFood) {
     return (
-      <div className="space-y-3">
-        <FoodDetailCard food={scannedFood} onAdd={onAddFood} />
-        <button
-          onClick={() => {
-            setScannedFood(null)
-            setLastScannedCode('')
-          }}
-          className="block w-full text-center text-sm text-[#64748b] hover:text-[#94a3b8]"
-        >
-          Scan another
-        </button>
-      </div>
+      <FoodDetailCard
+        food={scannedFood}
+        onAdd={(food, servings) => onAddFood(food, servings)}
+        onCancel={() => {
+          setScannedFood(null)
+          setLastScannedCode('')
+        }}
+      />
     )
   }
 
@@ -64,7 +61,7 @@ export function ScanTab({ onAddFood, onManualEntry }: ScanTabProps) {
     <div className="space-y-4">
       {cameraError ? (
         <div className="rounded-lg border border-[#1e293b] bg-[#0f172a] p-6 text-center">
-          <p className="mb-3 text-sm text-[#64748b]">Camera not available</p>
+          <p className="mb-3 text-sm text-[#64748b]">{cameraError}</p>
           <div className="flex gap-2">
             <Input
               placeholder="Enter barcode"
@@ -80,12 +77,26 @@ export function ScanTab({ onAddFood, onManualEntry }: ScanTabProps) {
               Look Up
             </Button>
           </div>
+          <button
+            onClick={onCancel}
+            className="mt-3 text-sm text-[#64748b] hover:text-[#94a3b8]"
+          >
+            Cancel
+          </button>
         </div>
       ) : (
-        <QrScanner
-          onScan={lookupBarcode}
-          onError={(err) => setCameraError(err)}
-        />
+        <>
+          <QrScanner
+            onScan={lookupBarcode}
+            onError={(err) => setCameraError(err)}
+          />
+          <button
+            onClick={onCancel}
+            className="block w-full text-center text-sm text-[#64748b] hover:text-[#94a3b8]"
+          >
+            Cancel
+          </button>
+        </>
       )}
 
       {loading && (
@@ -96,14 +107,26 @@ export function ScanTab({ onAddFood, onManualEntry }: ScanTabProps) {
 
       {error && (
         <div className="rounded-lg border border-[#1e293b] bg-[#0f172a] p-4 text-center">
-          <p className="mb-3 text-sm text-[#64748b]">{error}</p>
-          <Button
-            variant="outline"
-            onClick={() => onManualEntry(lastScannedCode)}
-            className="border-[#1e293b] text-[#94a3b8]"
-          >
-            Enter manually
-          </Button>
+          <p className="text-sm font-medium text-[#f8fafc]">Barcode not found</p>
+          <p className="mt-1 text-xs text-[#64748b]">We couldn&apos;t find this product in our database</p>
+          <div className="mt-3 flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setError('')
+                setLastScannedCode('')
+              }}
+              className="flex-1 border-[#1e293b] text-[#94a3b8]"
+            >
+              Try again
+            </Button>
+            <Button
+              onClick={() => onManualEntry(lastScannedCode)}
+              className="flex-1 bg-[#3b82f6] text-white hover:bg-[#2563eb]"
+            >
+              Enter manually
+            </Button>
+          </div>
         </div>
       )}
     </div>

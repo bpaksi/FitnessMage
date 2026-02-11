@@ -22,9 +22,17 @@ export function FoodListItem({
     : food.name
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors active:bg-[#0f172a]"
       onClick={() => onTap(food)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onTap(food)
+        }
+      }}
       onContextMenu={(e) => {
         e.preventDefault()
         onLongPress?.(food)
@@ -49,6 +57,6 @@ export function FoodListItem({
           {isFavorite ? '★' : '☆'}
         </button>
       )}
-    </button>
+    </div>
   )
 }
