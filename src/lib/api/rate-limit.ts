@@ -57,3 +57,8 @@ export const pairingClaimLimiter = createRateLimiter({
   maxRequests: 5,
   windowMs: 60_000,
 })
+
+export const usdaSearchLimiter = createRateLimiter({
+  maxRequests: 15,
+  windowMs: 60_000,
+})
