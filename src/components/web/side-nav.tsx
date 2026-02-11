@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { BarChart3, UtensilsCrossed, Smartphone, Settings, ArrowLeft } from 'lucide-react'
+import { BarChart3, BookOpen, UtensilsCrossed, Smartphone, Settings, ArrowLeft } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/foods', label: 'Foods', icon: BookOpen },
   { href: '/meals', label: 'Meals', icon: UtensilsCrossed },
   { href: '/devices', label: 'Devices', icon: Smartphone },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -13,7 +14,7 @@ const NAV_ITEMS = [
 
 const SETTINGS_SECTIONS = [
   { section: 'daily-goals', label: 'Daily Goals' },
-  { section: 'preferences', label: 'Preferences' },
+  { section: 'preferences', label: 'Meal Settings' },
   { section: 'data', label: 'Data Management' },
 ] as const
 

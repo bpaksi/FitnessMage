@@ -43,7 +43,7 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/settings')
+    router.push('/reports')
   }
 
   return (

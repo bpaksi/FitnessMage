@@ -11,9 +11,8 @@ interface FoodLogItemProps {
   onDelete: (entry: DailyLogEntry) => void
 }
 
-const SNAP_THRESHOLD = 0.3
-const DELETE_THRESHOLD = 0.6
 const DELETE_ZONE_WIDTH = 72
+const SNAP_THRESHOLD_PX = 36
 
 function vibrate() {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50)
@@ -31,7 +30,6 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
   const currentX = useRef(0)
   const isTracking = useRef(false)
   const directionLocked = useRef<'horizontal' | 'vertical' | null>(null)
-  const didVibrate = useRef(false)
   const [reducedMotion] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -58,7 +56,6 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
     currentX.current = 0
     isTracking.current = true
     directionLocked.current = null
-    didVibrate.current = false
     setSwiping(true)
   }, [settled])
 
@@ -86,14 +83,11 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
       currentX.current = clampedDx
       setOffsetX(clampedDx)
 
-      // Haptic when crossing delete threshold
-      const containerWidth = containerRef.current?.offsetWidth ?? 300
-      const ratio = Math.abs(clampedDx) / containerWidth
-      if (ratio >= DELETE_THRESHOLD && !didVibrate.current) {
-        vibrate()
-        didVibrate.current = true
-      } else if (ratio < DELETE_THRESHOLD) {
-        didVibrate.current = false
+      // Clamp max swipe to delete zone width
+      const maxSwipe = DELETE_ZONE_WIDTH + 20
+      if (Math.abs(clampedDx) > maxSwipe) {
+        currentX.current = -maxSwipe
+        setOffsetX(-maxSwipe)
       }
     }
   }, [])
@@ -103,15 +97,7 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
     isTracking.current = false
     setSwiping(false)
 
-    const containerWidth = containerRef.current?.offsetWidth ?? 300
-    const ratio = Math.abs(currentX.current) / containerWidth
-
-    if (ratio >= DELETE_THRESHOLD) {
-      // Auto-delete
-      vibrate()
-      setOffsetX(-containerWidth)
-      setTimeout(() => onDelete(entry), 200)
-    } else if (ratio >= SNAP_THRESHOLD) {
+    if (Math.abs(currentX.current) >= SNAP_THRESHOLD_PX) {
       // Settle to show delete zone
       setOffsetX(-DELETE_ZONE_WIDTH)
       setSettled(true)
@@ -119,7 +105,7 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
       // Snap back
       setOffsetX(0)
     }
-  }, [swiping, entry, onDelete])
+  }, [swiping])
 
   const handleDeleteClick = useCallback(() => {
     vibrate()
