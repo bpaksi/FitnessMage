@@ -5,6 +5,7 @@ import { calculateMacros } from '@/lib/utils/macro-calc'
 import { getMealTypeForTime } from '@/lib/utils/meal-time'
 import type { Food } from '@/lib/types/food'
 import type { MealTimeBoundaries } from '@/lib/types/settings'
+import { ensureUserFood } from '@/lib/utils/ensure-user-food'
 
 export async function GET(request: Request) {
   try {
@@ -102,6 +103,9 @@ export async function POST(request: Request) {
 
     if (foodError || !food) return error('Food not found', 404)
 
+    // Ensure the user owns a copy of this food
+    const ownedFoodId = await ensureUserFood(admin, food as unknown as Food, userId)
+
     const macros = calculateMacros(food as unknown as Food, servings)
 
     const { data, error: dbError } = await admin
@@ -109,7 +113,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: userId,
         date,
-        food_id: body.food_id,
+        food_id: ownedFoodId,
         meal_type: mealType,
         servings,
         ...macros,

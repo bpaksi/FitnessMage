@@ -42,7 +42,7 @@ export async function PUT(
       .single()
 
     if (!existing) return error('Food not found', 404)
-    if (existing.user_id && existing.user_id !== userId) {
+    if (existing.user_id !== userId) {
       return error('Not authorized to edit this food', 403)
     }
 
@@ -88,16 +88,15 @@ export async function DELETE(
     const { id } = await params
     const admin = createAdminClient()
 
-    // Verify ownership and manual source
+    // Verify ownership
     const { data: existing } = await admin
       .from('foods')
-      .select('user_id, source')
+      .select('user_id')
       .eq('id', id)
       .single()
 
     if (!existing) return error('Food not found', 404)
     if (existing.user_id !== userId) return error('Not authorized', 403)
-    if (existing.source !== 'manual') return error('Can only delete custom foods', 400)
 
     const { error: dbError } = await admin.from('foods').delete().eq('id', id)
 
