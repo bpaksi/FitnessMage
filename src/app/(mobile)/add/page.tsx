@@ -4,8 +4,10 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMobileContext } from '@/contexts/mobile-context'
 import { useDailySummary } from '@/hooks/use-daily-summary'
+import { useDailyLog } from '@/hooks/use-daily-log'
 import { apiClient } from '@/lib/mobile/api-client'
 import { getMealTypeForTime } from '@/lib/utils/meal-time'
+import { toast } from 'sonner'
 import { showUndoToast } from '@/components/mobile/undo-toast'
 import { BottomNav } from '@/components/mobile/bottom-nav'
 import { SavedTab } from '@/components/mobile/add/saved-tab'
@@ -37,6 +39,7 @@ export default function AddPage() {
   const router = useRouter()
   const { selectedDate, userSettings } = useMobileContext()
   const { mutate } = useDailySummary(selectedDate)
+  const { mutate: mutateLog } = useDailyLog(selectedDate)
   const [activeTab, setActiveTab] = useState('recent')
   const [mealType, setMealType] = useState<MealType>(() =>
     getMealTypeForTime(undefined, userSettings?.meal_time_boundaries),
@@ -90,14 +93,15 @@ export default function AddPage() {
           body: { food_id: food.id, date: selectedDate, meal_type: mealType, servings },
         })
 
-        showUndoToast(entry.id, food.name, () => mutate())
+        mutateLog()
+        showUndoToast(entry.id, food.name, () => { mutate(); mutateLog() })
         router.push('/track')
       } catch {
         // Revert on error
         mutate()
       }
     },
-    [selectedDate, mealType, mutate, router],
+    [selectedDate, mealType, mutate, mutateLog, router],
   )
 
   const addMealToLog = useCallback(
@@ -158,13 +162,14 @@ export default function AddPage() {
           body: { meal_id: meal.id, date: selectedDate, meal_type: mealType, servings },
         })
 
-        showUndoToast(entry.id, meal.name, () => mutate())
+        mutateLog()
+        showUndoToast(entry.id, meal.name, () => { mutate(); mutateLog() })
         router.push('/track')
       } catch {
         mutate()
       }
     },
-    [selectedDate, mealType, mutate, router],
+    [selectedDate, mealType, mutate, mutateLog, router],
   )
 
   async function handleManualSubmit(values: {
@@ -194,6 +199,8 @@ export default function AddPage() {
         body: values,
       })
       await addFoodToLog(food)
+    } catch {
+      toast.error('Failed to create food')
     } finally {
       setManualLoading(false)
     }

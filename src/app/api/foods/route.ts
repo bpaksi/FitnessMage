@@ -8,16 +8,22 @@ export async function POST(request: Request) {
     const body = await request.json()
     const admin = createAdminClient()
 
+    if (!body.name || !body.serving_size) {
+      return error('Name and serving size are required', 400)
+    }
+
+    const num = (v: unknown, fallback = 0) => (typeof v === 'number' && !isNaN(v) ? v : fallback)
+
     const { data, error: dbError } = await admin
       .from('foods')
       .insert({
         name: body.name,
         brand: body.brand || null,
         serving_size: body.serving_size,
-        calories: body.calories,
-        protein: body.protein,
-        carbs: body.carbs,
-        fat: body.fat,
+        calories: num(body.calories),
+        protein: num(body.protein),
+        carbs: num(body.carbs),
+        fat: num(body.fat),
         barcode: body.barcode || null,
         fiber: body.fiber ?? null,
         sugar: body.sugar ?? null,

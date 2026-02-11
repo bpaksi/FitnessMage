@@ -86,19 +86,19 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-[#94a3b8]">Calories</Label>
-          <Input type="number" {...register('calories')} placeholder="0" className={inputClass} />
+          <Input type="number" {...register('calories', { valueAsNumber: true })} placeholder="0" className={inputClass} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-[#94a3b8]">Protein (g)</Label>
-          <Input type="number" step="0.1" {...register('protein')} placeholder="0" className={inputClass} />
+          <Input type="number" step="0.1" {...register('protein', { valueAsNumber: true })} placeholder="0" className={inputClass} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-[#94a3b8]">Carbs (g)</Label>
-          <Input type="number" step="0.1" {...register('carbs')} placeholder="0" className={inputClass} />
+          <Input type="number" step="0.1" {...register('carbs', { valueAsNumber: true })} placeholder="0" className={inputClass} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-[#94a3b8]">Fat (g)</Label>
-          <Input type="number" step="0.1" {...register('fat')} placeholder="0" className={inputClass} />
+          <Input type="number" step="0.1" {...register('fat', { valueAsNumber: true })} placeholder="0" className={inputClass} />
         </div>
       </div>
 
