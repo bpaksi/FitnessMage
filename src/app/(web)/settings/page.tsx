@@ -131,10 +131,7 @@ function SettingsContent() {
           />
           <MacroCalculatorSection
             units={units}
-            onApply={(calculated) => {
-              setGoals(calculated)
-              saveSettings({ goals: calculated })
-            }}
+            onApply={setGoals}
           />
         </div>
       )}
