@@ -10,7 +10,7 @@ import type { Food } from '@/lib/types/food'
 
 const QrScanner = dynamic(
   () => import('@/components/mobile/qr-scanner').then((mod) => ({ default: mod.QrScanner })),
-  { ssr: false, loading: () => <div className="flex h-48 items-center justify-center text-sm text-[#64748b]">Loading camera...</div> },
+  { ssr: false, loading: () => <div className="flex items-center justify-center bg-black text-sm text-[#64748b]" style={{ height: '60svh' }}>Starting camera...</div> },
 )
 
 interface ScanTabProps {
@@ -23,6 +23,7 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
   const [scannedFood, setScannedFood] = useState<Food | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [timedOut, setTimedOut] = useState(false)
   const [cameraError, setCameraError] = useState('')
   const [manualBarcode, setManualBarcode] = useState('')
   const [lastScannedCode, setLastScannedCode] = useState('')
@@ -54,6 +55,45 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
           setLastScannedCode('')
         }}
       />
+    )
+  }
+
+  if (error || timedOut) {
+    const title = error ? 'Could not scan barcode' : 'No barcode detected'
+    const subtitle = error
+      ? 'We couldn\u0027t find this product in our database'
+      : 'Try holding the camera steady with the barcode inside the rectangle'
+
+    return (
+      <div className="rounded-lg border border-[#1e293b] bg-[#0f172a] p-4">
+        <div className="flex flex-col items-center py-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+          <p className="mt-3 text-sm font-medium text-[#f8fafc]">{title}</p>
+          <p className="mt-1 text-center text-xs text-[#64748b]">{subtitle}</p>
+        </div>
+
+        <div className="mt-2 flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setError('')
+              setTimedOut(false)
+              setLastScannedCode('')
+            }}
+            className="flex-1 border-[#1e293b] text-[#94a3b8]"
+          >
+            Try again
+          </Button>
+          <Button
+            onClick={() => onManualEntry(lastScannedCode || undefined)}
+            className="flex-1 bg-[#3b82f6] text-white hover:bg-[#2563eb]"
+          >
+            Enter manually
+          </Button>
+        </div>
+      </div>
     )
   }
 
@@ -89,6 +129,7 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
           <QrScanner
             onScan={lookupBarcode}
             onError={(err) => setCameraError(err)}
+            onTimeout={() => setTimedOut(true)}
           />
           <button
             onClick={onCancel}
@@ -102,31 +143,6 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
       {loading && (
         <div className="flex items-center justify-center py-4">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#3b82f6] border-t-transparent" />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-lg border border-[#1e293b] bg-[#0f172a] p-4 text-center">
-          <p className="text-sm font-medium text-[#f8fafc]">Barcode not found</p>
-          <p className="mt-1 text-xs text-[#64748b]">We couldn&apos;t find this product in our database</p>
-          <div className="mt-3 flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setError('')
-                setLastScannedCode('')
-              }}
-              className="flex-1 border-[#1e293b] text-[#94a3b8]"
-            >
-              Try again
-            </Button>
-            <Button
-              onClick={() => onManualEntry(lastScannedCode)}
-              className="flex-1 bg-[#3b82f6] text-white hover:bg-[#2563eb]"
-            >
-              Enter manually
-            </Button>
-          </div>
         </div>
       )}
     </div>
