@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NoDevicesBanner } from '@/components/web/no-devices-banner'
+import { NavLink } from '@/components/web/nav-link'
 
 export default async function WebLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -31,18 +32,9 @@ export default async function WebLayout({ children }: { children: React.ReactNod
         </Link>
 
         <nav className="flex flex-col gap-1">
-          <Link
-            href="/settings"
-            className="rounded-md bg-[#0f172a] px-3 py-2 text-sm font-medium text-[#f8fafc]"
-          >
-            Settings
-          </Link>
-          <span className="cursor-not-allowed rounded-md px-3 py-2 text-sm text-[#334155]">
-            Meals
-          </span>
-          <span className="cursor-not-allowed rounded-md px-3 py-2 text-sm text-[#334155]">
-            Reports
-          </span>
+          <NavLink href="/settings">Settings</NavLink>
+          <NavLink href="/meals">Meals</NavLink>
+          <NavLink href="/reports">Reports</NavLink>
         </nav>
 
         <div className="mt-auto">
