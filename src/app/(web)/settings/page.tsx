@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { DailyGoalsSection } from '@/components/web/settings/daily-goals-section'
+import { MacroCalculatorSection } from '@/components/web/settings/macro-calculator-section'
 import { LinkedDevicesSection } from '@/components/web/settings/linked-devices-section'
 import { PreferencesSection } from '@/components/web/settings/preferences-section'
 import { DataManagementSection } from '@/components/web/settings/data-management-section'
@@ -121,11 +122,21 @@ function SettingsContent() {
   return (
     <div className="mx-auto max-w-2xl">
       {section === 'daily-goals' && (
-        <DailyGoalsSection
-          goals={goals}
-          onGoalsChange={setGoals}
-          onSave={() => saveSettings({ goals })}
-        />
+        <div className="space-y-6">
+          <DailyGoalsSection
+            goals={goals}
+            savedGoals={settings.goals}
+            onGoalsChange={setGoals}
+            onSave={() => saveSettings({ goals })}
+          />
+          <MacroCalculatorSection
+            units={units}
+            onApply={(calculated) => {
+              setGoals(calculated)
+              saveSettings({ goals: calculated })
+            }}
+          />
+        </div>
       )}
       {section === 'devices' && (
         <LinkedDevicesSection
