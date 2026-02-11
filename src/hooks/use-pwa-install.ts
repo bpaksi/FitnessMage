@@ -30,10 +30,12 @@ export function usePwaInstall() {
   const [isStandalone, setIsStandalone] = useState(false)
   const [platform, setPlatform] = useState<Platform>('other')
 
+  /* eslint-disable react-hooks/set-state-in-effect -- reading browser APIs on mount */
   useEffect(() => {
     setPlatform(detectPlatform())
     setIsStandalone(checkStandalone())
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     function handlePrompt(e: Event) {
