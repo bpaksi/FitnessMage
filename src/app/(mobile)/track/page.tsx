@@ -158,7 +158,7 @@ export default function TrackPage() {
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {MEAL_ORDER.map((meal) => (
               <MealGroup
                 key={meal}

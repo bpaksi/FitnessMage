@@ -7,8 +7,8 @@ import type { LucideIcon } from 'lucide-react'
 
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/home', label: 'Home', icon: Home },
-  { href: '/add', label: 'Add', icon: Plus },
   { href: '/track', label: 'Track', icon: ClipboardList },
+  { href: '/add', label: 'Add', icon: Plus },
   { href: '/weekly', label: 'Weekly', icon: Calendar },
 ]
 
