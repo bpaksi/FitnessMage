@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 interface EmptyStateProps {
-  icon: string
+  icon: React.ReactNode
   message: string
   ctaLabel?: string
   ctaHref?: string
@@ -15,9 +15,9 @@ export function EmptyState({ icon, message, ctaLabel, ctaHref }: EmptyStateProps
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <span className="mb-3 text-4xl" role="img" aria-hidden="true">
+      <div className="mb-3 text-[#64748b]" aria-hidden="true">
         {icon}
-      </span>
+      </div>
       <p className="mb-4 text-sm text-[#64748b]">{message}</p>
       {ctaLabel && ctaHref && (
         <Button

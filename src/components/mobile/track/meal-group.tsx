@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { Sun, CloudSun, Moon, Apple } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { DailyLogEntry, MealType } from '@/lib/types/log'
 
-const MEAL_ICONS: Record<MealType, string> = {
-  breakfast: '☀️',
-  lunch: '🌤️',
-  dinner: '🌙',
-  snack: '🍎',
+const MEAL_ICONS: Record<MealType, React.ReactNode> = {
+  breakfast: <Sun size={16} />,
+  lunch: <CloudSun size={16} />,
+  dinner: <Moon size={16} />,
+  snack: <Apple size={16} />,
 }
 
 const MEAL_LABELS: Record<MealType, string> = {

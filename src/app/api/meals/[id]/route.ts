@@ -45,9 +45,13 @@ export async function PATCH(
     if (!existing) return error('Meal not found', 404)
     if (existing.user_id !== userId) return error('Not authorized', 403)
 
+    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.total_servings !== undefined) updateData.total_servings = body.total_servings
+
     const { data, error: dbError } = await admin
       .from('meals')
-      .update({ name: body.name, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select('*, foods:meal_foods(*, food:foods(*))')
       .single()

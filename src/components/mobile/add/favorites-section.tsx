@@ -1,15 +1,16 @@
 'use client'
 
+import { Star } from 'lucide-react'
 import { useFavorites } from '@/hooks/use-favorites'
 import { FoodListItem } from './food-list-item'
 import type { Food } from '@/lib/types/food'
 
 interface FavoritesSectionProps {
-  onTapFood: (food: Food) => void
-  onLongPressFood: (food: Food) => void
+  onSelectFood: (food: Food) => void
+  onQuickAddFood: (food: Food) => void
 }
 
-export function FavoritesSection({ onTapFood, onLongPressFood }: FavoritesSectionProps) {
+export function FavoritesSection({ onSelectFood, onQuickAddFood }: FavoritesSectionProps) {
   const { favorites, isLoading, toggleFavorite } = useFavorites()
 
   if (isLoading) {
@@ -25,7 +26,7 @@ export function FavoritesSection({ onTapFood, onLongPressFood }: FavoritesSectio
   if (favorites.length === 0) {
     return (
       <div className="py-8 text-center">
-        <span className="mb-2 block text-2xl">⭐</span>
+        <Star size={24} className="mx-auto mb-2 fill-amber-400 text-amber-400" />
         <p className="text-sm text-[#64748b]">Star foods you eat often</p>
       </div>
     )
@@ -38,8 +39,8 @@ export function FavoritesSection({ onTapFood, onLongPressFood }: FavoritesSectio
           key={food.id}
           food={food}
           isFavorite={true}
-          onTap={onTapFood}
-          onLongPress={onLongPressFood}
+          onSelect={onSelectFood}
+          onQuickAdd={onQuickAddFood}
           onToggleFavorite={toggleFavorite}
         />
       ))}

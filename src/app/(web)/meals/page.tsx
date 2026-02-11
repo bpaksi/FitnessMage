@@ -140,7 +140,12 @@ export default function MealsPage() {
               return (
                 <Card key={meal.id} className="border-[#1e293b] bg-[#0f172a]">
                   <CardHeader className="flex flex-row items-start justify-between pb-2">
-                    <CardTitle className="text-base text-[#f8fafc]">{meal.name}</CardTitle>
+                    <div>
+                      <CardTitle className="text-base text-[#f8fafc]">{meal.name}</CardTitle>
+                      {meal.total_servings > 1 && (
+                        <p className="text-xs text-[#64748b]">Makes {meal.total_servings} servings</p>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
@@ -194,12 +199,24 @@ export default function MealsPage() {
                         <p className="text-xs text-[#64748b]">No foods</p>
                       )}
                     </div>
-                    <div className="flex gap-3 text-xs">
-                      <span className="text-[#22c55e]">{totals.calories} cal</span>
-                      <span className="text-[#ef4444]">{totals.protein}g P</span>
-                      <span className="text-[#3b82f6]">{totals.carbs}g C</span>
-                      <span className="text-[#eab308]">{totals.fat}g F</span>
-                    </div>
+                    {meal.total_servings > 1 ? (
+                      <>
+                        <p className="mb-0.5 text-[10px] text-[#64748b]">Per serving</p>
+                        <div className="flex gap-3 text-xs">
+                          <span className="text-[#22c55e]">{Math.round(totals.calories / meal.total_servings)} cal</span>
+                          <span className="text-[#ef4444]">{Math.round(totals.protein / meal.total_servings * 10) / 10}g P</span>
+                          <span className="text-[#3b82f6]">{Math.round(totals.carbs / meal.total_servings * 10) / 10}g C</span>
+                          <span className="text-[#eab308]">{Math.round(totals.fat / meal.total_servings * 10) / 10}g F</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex gap-3 text-xs">
+                        <span className="text-[#22c55e]">{totals.calories} cal</span>
+                        <span className="text-[#ef4444]">{totals.protein}g P</span>
+                        <span className="text-[#3b82f6]">{totals.carbs}g C</span>
+                        <span className="text-[#eab308]">{totals.fat}g F</span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )

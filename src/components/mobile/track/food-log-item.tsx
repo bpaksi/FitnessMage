@@ -13,9 +13,11 @@ interface FoodLogItemProps {
 export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLogItemProps) {
   const [expanded, setExpanded] = useState(false)
 
-  const foodName = entry.food
-    ? `${entry.food.name}${entry.food.serving_size ? ` (${entry.food.serving_size})` : ''}`
-    : 'Unknown food'
+  const foodName = entry.meal
+    ? entry.meal.name
+    : entry.food
+      ? `${entry.food.name}${entry.food.serving_size ? ` (${entry.food.serving_size})` : ''}`
+      : 'Unknown food'
 
   return (
     <div className="border-b border-[#1e293b] last:border-b-0">

@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { FoodSearchDialog } from './food-search-dialog'
+import { FoodPickerDialog } from './food-picker-dialog'
 import type { Food } from '@/lib/types/food'
 import type { Meal } from '@/lib/types/meal'
 
@@ -31,8 +31,9 @@ interface MealDialogProps {
 
 export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProps) {
   const [name, setName] = useState('')
+  const [totalServings, setTotalServings] = useState(1)
   const [foods, setFoods] = useState<SelectedFood[]>([])
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const isEdit = !!meal
@@ -40,6 +41,7 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
   useEffect(() => {
     if (meal) {
       setName(meal.name)
+      setTotalServings(meal.total_servings || 1)
       setFoods(
         meal.foods.map((mf) => ({
           food: mf.food,
@@ -48,6 +50,7 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
       )
     } else {
       setName('')
+      setTotalServings(1)
       setFoods([])
     }
   }, [meal, open])
@@ -76,6 +79,13 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
     { calories: 0, protein: 0, carbs: 0, fat: 0 },
   )
 
+  const perServing = {
+    calories: Math.round(totals.calories / totalServings),
+    protein: Math.round((totals.protein / totalServings) * 10) / 10,
+    carbs: Math.round((totals.carbs / totalServings) * 10) / 10,
+    fat: Math.round((totals.fat / totalServings) * 10) / 10,
+  }
+
   async function handleSave() {
     if (!name.trim()) {
       toast.error('Meal name is required')
@@ -85,11 +95,11 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
     setSaving(true)
     try {
       if (isEdit) {
-        // Update name
+        // Update name and total_servings
         await fetch(`/api/meals/${meal.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name.trim() }),
+          body: JSON.stringify({ name: name.trim(), total_servings: totalServings }),
         })
 
         // Reconcile foods: delete removed, add new, update changed servings
@@ -133,6 +143,7 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: name.trim(),
+            total_servings: totalServings,
             foods: foods.map((f) => ({ food_id: f.food.id, servings: f.servings })),
           }),
         })
@@ -174,12 +185,24 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
             </div>
 
             <div className="space-y-2">
+              <Label className="text-[#94a3b8]">Makes __ servings</Label>
+              <Input
+                type="number"
+                min={1}
+                step={1}
+                value={totalServings}
+                onChange={(e) => setTotalServings(Math.max(1, +e.target.value || 1))}
+                className="w-24 border-[#1e293b] bg-[#020817] text-[#f8fafc]"
+              />
+            </div>
+
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[#94a3b8]">Foods</Label>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSearchOpen(true)}
+                  onClick={() => setPickerOpen(true)}
                   className="border-[#1e293b] text-[#94a3b8] hover:bg-[#1e293b]"
                 >
                   <Plus className="mr-1 h-3 w-3" />
@@ -237,6 +260,17 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
                   <span className="text-[#3b82f6]">{totals.carbs}g C</span>
                   <span className="text-[#eab308]">{totals.fat}g F</span>
                 </div>
+                {totalServings > 1 && (
+                  <>
+                    <p className="mb-1 mt-2 text-xs font-medium text-[#64748b]">Per Serving</p>
+                    <div className="flex gap-4 text-sm">
+                      <span className="text-[#22c55e]">{perServing.calories} cal</span>
+                      <span className="text-[#ef4444]">{perServing.protein}g P</span>
+                      <span className="text-[#3b82f6]">{perServing.carbs}g C</span>
+                      <span className="text-[#eab308]">{perServing.fat}g F</span>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -260,9 +294,9 @@ export function MealDialog({ open, onOpenChange, meal, onSaved }: MealDialogProp
         </DialogContent>
       </Dialog>
 
-      <FoodSearchDialog
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
+      <FoodPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
         onSelect={handleAddFood}
       />
     </>

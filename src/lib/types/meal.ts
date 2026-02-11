@@ -13,6 +13,7 @@ export interface Meal {
   id: string
   user_id: string
   name: string
+  total_servings: number
   created_at: string
   updated_at: string
   foods: MealFood[]
@@ -20,5 +21,6 @@ export interface Meal {
 
 export interface CreateMealInput {
   name: string
+  total_servings: number
   foods: { food_id: string; servings: number }[]
 }

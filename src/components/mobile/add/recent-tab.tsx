@@ -3,15 +3,16 @@
 import { useRecentFoods } from '@/hooks/use-recent-foods'
 import { useFavorites } from '@/hooks/use-favorites'
 import { FoodListItem } from './food-list-item'
+import { Clock } from 'lucide-react'
 import { EmptyState } from '@/components/mobile/empty-state'
 import type { Food } from '@/lib/types/food'
 
 interface RecentTabProps {
-  onTapFood: (food: Food) => void
-  onLongPressFood: (food: Food) => void
+  onSelectFood: (food: Food) => void
+  onQuickAddFood: (food: Food) => void
 }
 
-export function RecentTab({ onTapFood, onLongPressFood }: RecentTabProps) {
+export function RecentTab({ onSelectFood, onQuickAddFood }: RecentTabProps) {
   const { foods, isLoading } = useRecentFoods()
   const { favorites, toggleFavorite } = useFavorites()
   const favoriteIds = new Set(favorites.map((f) => f.id))
@@ -27,7 +28,7 @@ export function RecentTab({ onTapFood, onLongPressFood }: RecentTabProps) {
   }
 
   if (foods.length === 0) {
-    return <EmptyState icon="🕐" message="Your recently logged foods will appear here" />
+    return <EmptyState icon={<Clock size={40} />} message="Your recently logged foods will appear here" />
   }
 
   return (
@@ -37,8 +38,8 @@ export function RecentTab({ onTapFood, onLongPressFood }: RecentTabProps) {
           key={food.id}
           food={food}
           isFavorite={favoriteIds.has(food.id)}
-          onTap={onTapFood}
-          onLongPress={onLongPressFood}
+          onSelect={onSelectFood}
+          onQuickAdd={onQuickAddFood}
           onToggleFavorite={toggleFavorite}
         />
       ))}

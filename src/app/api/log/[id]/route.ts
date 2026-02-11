@@ -27,7 +27,7 @@ export async function PATCH(
     const updates: Record<string, unknown> = {}
 
     if (body.servings !== undefined) {
-      const food = entry.food as Food
+      const food = entry.food as unknown as Food
       const macros = calculateMacros(food, body.servings)
       updates.servings = body.servings
       updates.calories = macros.calories

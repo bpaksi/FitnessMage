@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input'
 import type { Food } from '@/lib/types/food'
 
 interface SearchTabProps {
-  onTapFood: (food: Food) => void
-  onLongPressFood: (food: Food) => void
+  onSelectFood: (food: Food) => void
+  onQuickAddFood: (food: Food) => void
 }
 
-export function SearchTab({ onTapFood, onLongPressFood }: SearchTabProps) {
+export function SearchTab({ onSelectFood, onQuickAddFood }: SearchTabProps) {
   const [query, setQuery] = useState('')
   const { foods, isLoading } = useFoodSearch(query)
   const { favorites, toggleFavorite } = useFavorites()
@@ -48,8 +48,8 @@ export function SearchTab({ onTapFood, onLongPressFood }: SearchTabProps) {
             key={food.id}
             food={food}
             isFavorite={favoriteIds.has(food.id)}
-            onTap={onTapFood}
-            onLongPress={onLongPressFood}
+            onSelect={onSelectFood}
+            onQuickAdd={onQuickAddFood}
             onToggleFavorite={toggleFavorite}
           />
         ))}

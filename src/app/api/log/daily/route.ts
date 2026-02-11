@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     // Get entries
     const { data: entries, error: logError } = await admin
       .from('daily_log')
-      .select('*, food:foods(id, name, serving_size, brand)')
+      .select('*, food:foods(id, name, serving_size, brand), meal:meals(id, name, total_servings)')
       .eq('user_id', userId)
       .eq('date', date)
       .order('logged_at', { ascending: true })

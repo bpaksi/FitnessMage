@@ -6,6 +6,7 @@ import { useWeeklySummary } from '@/hooks/use-weekly-summary'
 import { BottomNav } from '@/components/mobile/bottom-nav'
 import { WeekGrid } from '@/components/mobile/weekly/week-grid'
 import { EmptyState } from '@/components/mobile/empty-state'
+import { BarChart3 } from 'lucide-react'
 
 function vibrate() {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50)
@@ -79,7 +80,7 @@ export default function WeeklyPage() {
           <WeekGrid days={weekly.days} goals={weekly.goals} />
         ) : (
           <EmptyState
-            icon="📊"
+            icon={<BarChart3 size={40} />}
             message="Complete a full day to see your weekly progress"
             ctaLabel="Log Food"
             ctaHref="/add"

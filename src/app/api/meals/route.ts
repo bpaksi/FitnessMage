@@ -32,7 +32,11 @@ export async function POST(request: Request) {
     // Insert meal
     const { data: meal, error: mealError } = await admin
       .from('meals')
-      .insert({ user_id: userId, name: body.name.trim() })
+      .insert({
+        user_id: userId,
+        name: body.name.trim(),
+        total_servings: body.total_servings || 1,
+      })
       .select()
       .single()
 

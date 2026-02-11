@@ -7,12 +7,13 @@ import { apiClient } from '@/lib/mobile/api-client'
 import { getMealTypeForTime } from '@/lib/utils/meal-time'
 import { showUndoToast } from '@/components/mobile/undo-toast'
 import { BottomNav } from '@/components/mobile/bottom-nav'
-import { FavoritesSection } from '@/components/mobile/add/favorites-section'
+import { SavedTab } from '@/components/mobile/add/saved-tab'
 import { RecentTab } from '@/components/mobile/add/recent-tab'
 import { SearchTab } from '@/components/mobile/add/search-tab'
 import { ScanTab } from '@/components/mobile/add/scan-tab'
 import { ManualTab } from '@/components/mobile/add/manual-tab'
 import { QuantityPicker } from '@/components/mobile/add/quantity-picker'
+import { MealServingsPicker } from '@/components/mobile/add/meal-servings-picker'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Food } from '@/lib/types/food'
+import type { Meal } from '@/lib/types/meal'
 import type { MealType, DailyLogEntry } from '@/lib/types/log'
 
 function vibrate() {
@@ -38,6 +40,7 @@ export default function AddPage() {
     getMealTypeForTime(undefined, userSettings?.meal_time_boundaries),
   )
   const [quantityFood, setQuantityFood] = useState<Food | null>(null)
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const [manualBarcode, setManualBarcode] = useState<string | undefined>()
   const [manualLoading, setManualLoading] = useState(false)
 
@@ -94,6 +97,72 @@ export default function AddPage() {
     [selectedDate, mealType, mutate],
   )
 
+  const addMealToLog = useCallback(
+    async (meal: Meal, servings: number) => {
+      vibrate()
+
+      // Calculate preview macros for optimistic update
+      const ts = meal.total_servings || 1
+      const mealTotals = meal.foods.reduce(
+        (acc, mf) => ({
+          calories: acc.calories + mf.food.calories * mf.servings,
+          protein: acc.protein + mf.food.protein * mf.servings,
+          carbs: acc.carbs + mf.food.carbs * mf.servings,
+          fat: acc.fat + mf.food.fat * mf.servings,
+        }),
+        { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      )
+      const macros = {
+        calories: Math.round((mealTotals.calories / ts) * servings),
+        protein: Math.round((mealTotals.protein / ts) * servings * 10) / 10,
+        carbs: Math.round((mealTotals.carbs / ts) * servings * 10) / 10,
+        fat: Math.round((mealTotals.fat / ts) * servings * 10) / 10,
+      }
+
+      const optimisticEntry = {
+        id: `temp-${Date.now()}`,
+        user_id: '',
+        date: selectedDate,
+        food_id: null,
+        meal_id: meal.id,
+        meal_type: mealType,
+        servings,
+        ...macros,
+        logged_at: new Date().toISOString(),
+        meal: { id: meal.id, name: meal.name, total_servings: meal.total_servings },
+      }
+
+      mutate(
+        (current) =>
+          current
+            ? {
+                ...current,
+                entries: [...current.entries, optimisticEntry as DailyLogEntry],
+                totals: {
+                  calories: current.totals.calories + macros.calories,
+                  protein: current.totals.protein + macros.protein,
+                  carbs: current.totals.carbs + macros.carbs,
+                  fat: current.totals.fat + macros.fat,
+                },
+              }
+            : undefined,
+        false,
+      )
+
+      try {
+        const entry = await apiClient<DailyLogEntry>('/api/log', {
+          method: 'POST',
+          body: { meal_id: meal.id, date: selectedDate, meal_type: mealType, servings },
+        })
+
+        showUndoToast(entry.id, meal.name, () => mutate())
+      } catch {
+        mutate()
+      }
+    },
+    [selectedDate, mealType, mutate],
+  )
+
   async function handleManualSubmit(values: {
     name: string
     brand?: string
@@ -103,6 +172,16 @@ export default function AddPage() {
     carbs: number
     fat: number
     barcode?: string
+    fiber?: number
+    sugar?: number
+    sodium?: number
+    saturated_fat?: number
+    trans_fat?: number
+    cholesterol?: number
+    potassium?: number
+    vitamin_d?: number
+    calcium?: number
+    iron?: number
   }) {
     setManualLoading(true)
     try {
@@ -117,10 +196,10 @@ export default function AddPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col pb-20">
+    <div className="flex h-svh flex-col">
       {activeTab !== 'scan' && (
         <header
-          className="space-y-3 px-4 pt-4"
+          className="shrink-0 space-y-3 px-4 pt-4"
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
         >
           <h1 className="text-lg font-medium text-[#f8fafc]">Add Food</h1>
@@ -138,12 +217,12 @@ export default function AddPage() {
         </header>
       )}
 
-      <main className="flex-1 px-4 pt-4" style={activeTab === 'scan' ? { paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' } : undefined}>
+      <main className="flex-1 overflow-y-auto px-4 pb-20 pt-4" style={activeTab === 'scan' ? { paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' } : undefined}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {activeTab !== 'scan' && (
             <TabsList className="grid w-full grid-cols-5 bg-[#0f172a]">
-              <TabsTrigger value="favorites" className="text-xs data-[state=active]:bg-[#1e293b]">
-                Faves
+              <TabsTrigger value="saved" className="text-xs data-[state=active]:bg-[#1e293b]">
+                Saved
               </TabsTrigger>
               <TabsTrigger value="recent" className="text-xs data-[state=active]:bg-[#1e293b]">
                 Recent
@@ -160,24 +239,25 @@ export default function AddPage() {
             </TabsList>
           )}
 
-          <TabsContent value="favorites" className="mt-3">
-            <FavoritesSection
-              onTapFood={(food) => addFoodToLog(food)}
-              onLongPressFood={(food) => setQuantityFood(food)}
+          <TabsContent value="saved" className="mt-3">
+            <SavedTab
+              onSelectFood={(food) => setQuantityFood(food)}
+              onQuickAddFood={(food) => addFoodToLog(food)}
+              onSelectMeal={(meal) => setSelectedMeal(meal)}
             />
           </TabsContent>
 
           <TabsContent value="recent" className="mt-3">
             <RecentTab
-              onTapFood={(food) => addFoodToLog(food)}
-              onLongPressFood={(food) => setQuantityFood(food)}
+              onSelectFood={(food) => setQuantityFood(food)}
+              onQuickAddFood={(food) => addFoodToLog(food)}
             />
           </TabsContent>
 
           <TabsContent value="search" className="mt-3">
             <SearchTab
-              onTapFood={(food) => addFoodToLog(food)}
-              onLongPressFood={(food) => setQuantityFood(food)}
+              onSelectFood={(food) => setQuantityFood(food)}
+              onQuickAddFood={(food) => addFoodToLog(food)}
             />
           </TabsContent>
 
@@ -209,6 +289,16 @@ export default function AddPage() {
         onConfirm={(food, servings) => {
           addFoodToLog(food, servings)
           setQuantityFood(null)
+        }}
+      />
+
+      <MealServingsPicker
+        meal={selectedMeal}
+        open={!!selectedMeal}
+        onClose={() => setSelectedMeal(null)}
+        onConfirm={(meal, servings) => {
+          addMealToLog(meal, servings)
+          setSelectedMeal(null)
         }}
       />
 

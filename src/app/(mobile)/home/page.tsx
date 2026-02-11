@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/mobile/bottom-nav'
 import { MacroProgressBar } from '@/components/mobile/macro-progress-bar'
 import { DatePicker } from '@/components/mobile/date-picker'
 import { EmptyState } from '@/components/mobile/empty-state'
+import { Sparkles } from 'lucide-react'
 
 export default function HomePage() {
   const { selectedDate } = useMobileContext()
@@ -67,7 +68,7 @@ export default function HomePage() {
           </section>
         ) : (
           <EmptyState
-            icon="🧙"
+            icon={<Sparkles size={40} />}
             message="Log your first meal to see your progress"
             ctaLabel="Add Food"
             ctaHref="/add"

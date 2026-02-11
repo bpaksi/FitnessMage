@@ -26,6 +26,11 @@ export interface DailyLogEntry {
     serving_size: string | null
     brand: string | null
   }
+  meal?: {
+    id: string
+    name: string
+    total_servings: number
+  }
 }
 
 export interface DailySummary {
