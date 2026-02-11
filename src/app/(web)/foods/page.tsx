@@ -79,7 +79,7 @@ export default function FoodsPage() {
     setPage(1)
   }
 
-  function SortIcon({ column }: { column: SortColumn }) {
+  function renderSortIcon(column: SortColumn) {
     if (sortColumn !== column) return <ArrowUpDown className="ml-1 inline h-3 w-3" />
     return sortDirection === 'asc'
       ? <ArrowUp className="ml-1 inline h-3 w-3" />
@@ -201,32 +201,32 @@ export default function FoodsPage() {
                             className="cursor-pointer px-4 py-3 text-left text-xs font-medium text-[#64748b] hover:text-[#f8fafc] transition-colors"
                             onClick={() => handleSort('name')}
                           >
-                            Name <SortIcon column="name" />
+                            Name {renderSortIcon('name')}
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-[#64748b]">Serving</th>
                           <th
                             className="cursor-pointer px-4 py-3 text-right text-xs font-medium text-[#64748b] hover:text-[#f8fafc] transition-colors"
                             onClick={() => handleSort('calories')}
                           >
-                            Cal <SortIcon column="calories" />
+                            Cal {renderSortIcon('calories')}
                           </th>
                           <th
                             className="cursor-pointer px-4 py-3 text-right text-xs font-medium text-[#64748b] hover:text-[#f8fafc] transition-colors"
                             onClick={() => handleSort('protein')}
                           >
-                            P <SortIcon column="protein" />
+                            P {renderSortIcon('protein')}
                           </th>
                           <th
                             className="cursor-pointer px-4 py-3 text-right text-xs font-medium text-[#64748b] hover:text-[#f8fafc] transition-colors"
                             onClick={() => handleSort('carbs')}
                           >
-                            C <SortIcon column="carbs" />
+                            C {renderSortIcon('carbs')}
                           </th>
                           <th
                             className="cursor-pointer px-4 py-3 text-right text-xs font-medium text-[#64748b] hover:text-[#f8fafc] transition-colors"
                             onClick={() => handleSort('fat')}
                           >
-                            F <SortIcon column="fat" />
+                            F {renderSortIcon('fat')}
                           </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-[#64748b]"></th>
                         </tr>
