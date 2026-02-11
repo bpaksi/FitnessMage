@@ -341,44 +341,48 @@ export default function MealsPage() {
                             <td className="px-4 py-3 text-right text-sm text-[#3b82f6]">{food.carbs}g</td>
                             <td className="px-4 py-3 text-right text-sm text-[#eab308]">{food.fat}g</td>
                             <td className="px-4 py-3 text-right">
-                              <div className="flex justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditFood(food)}
-                                  className="h-8 w-8 p-0 text-[#64748b] hover:text-[#f8fafc]"
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-400"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent className="border-[#1e293b] bg-[#0f172a]">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle className="text-[#f8fafc]">Delete Food?</AlertDialogTitle>
-                                      <AlertDialogDescription className="text-[#64748b]">
-                                        This will permanently delete &quot;{food.name}&quot;. This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel className="border-[#1e293b] text-[#94a3b8]">Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => deleteFood(food.id)}
-                                        className="bg-red-600 text-white hover:bg-red-700"
+                              {food.source === 'manual' ? (
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditFood(food)}
+                                    className="h-8 w-8 p-0 text-[#64748b] hover:text-[#f8fafc]"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-400"
                                       >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="border-[#1e293b] bg-[#0f172a]">
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-[#f8fafc]">Delete Food?</AlertDialogTitle>
+                                        <AlertDialogDescription className="text-[#64748b]">
+                                          This will permanently delete &quot;{food.name}&quot;. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel className="border-[#1e293b] text-[#94a3b8]">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteFood(food.id)}
+                                          className="bg-red-600 text-white hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-[#64748b]">{food.source === 'usda' ? 'USDA' : 'OFF'}</span>
+                              )}
                             </td>
                           </tr>
                         ))}
