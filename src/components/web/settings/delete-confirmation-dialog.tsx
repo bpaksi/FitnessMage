@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -31,11 +31,12 @@ export function DeleteConfirmationDialog({
   onConfirm,
 }: DeleteConfirmationDialogProps) {
   const [input, setInput] = useState('')
-  const confirmed = input === 'DELETE'
-
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (prevOpen !== open) {
+    setPrevOpen(open)
     if (!open) setInput('')
-  }, [open])
+  }
+  const confirmed = input === 'DELETE'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

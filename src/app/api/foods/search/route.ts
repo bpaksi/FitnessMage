@@ -1,6 +1,6 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { ok, error, unauthorized } from '@/lib/api/response'
+import { ok, unauthorized } from '@/lib/api/response'
 import { usdaSearchLimiter } from '@/lib/api/rate-limit'
 import { searchUSDA, transformUSDAFood } from '@/lib/external/usda'
 

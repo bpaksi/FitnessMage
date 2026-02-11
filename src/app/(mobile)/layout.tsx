@@ -1,10 +1,12 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useSyncExternalStore } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { getDeviceToken } from '@/lib/mobile/token-store'
 import { MobileProvider } from '@/contexts/mobile-context'
 import { VersionCheck } from '@/components/mobile/version-check'
+
+const subscribe = () => () => {}
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -12,11 +14,11 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
   const isLinkPage = pathname === '/link'
 
   // null = not yet checked (SSR/hydration), true/false = client-side result
-  const [hasToken, setHasToken] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    setHasToken(getDeviceToken() !== null)
-  }, [])
+  const hasToken = useSyncExternalStore<boolean | null>(
+    subscribe,
+    () => getDeviceToken() !== null,
+    () => null,
+  )
 
   useEffect(() => {
     if (hasToken === false && !isLinkPage) {

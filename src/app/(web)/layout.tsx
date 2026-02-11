@@ -28,7 +28,7 @@ export default async function WebLayout({ children }: { children: React.ReactNod
       <Suspense
         fallback={<div className="h-24 border-b border-[#1e293b] bg-[#020817]" />}
       >
-        <AppBar hasDevices={hasDevices} />
+        <AppBar />
       </Suspense>
       <main className="flex-1 overflow-y-auto p-8">
         {!hasDevices && <NoDevicesBanner />}

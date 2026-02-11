@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useMobileContext } from '@/contexts/mobile-context'
 import { useDailySummary } from '@/hooks/use-daily-summary'
 import { apiClient } from '@/lib/mobile/api-client'
@@ -33,6 +34,7 @@ function vibrate() {
 }
 
 export default function AddPage() {
+  const router = useRouter()
   const { selectedDate, userSettings } = useMobileContext()
   const { mutate } = useDailySummary(selectedDate)
   const [activeTab, setActiveTab] = useState('recent')
@@ -89,12 +91,13 @@ export default function AddPage() {
         })
 
         showUndoToast(entry.id, food.name, () => mutate())
+        router.push('/track')
       } catch {
         // Revert on error
         mutate()
       }
     },
-    [selectedDate, mealType, mutate],
+    [selectedDate, mealType, mutate, router],
   )
 
   const addMealToLog = useCallback(
@@ -156,11 +159,12 @@ export default function AddPage() {
         })
 
         showUndoToast(entry.id, meal.name, () => mutate())
+        router.push('/track')
       } catch {
         mutate()
       }
     },
-    [selectedDate, mealType, mutate],
+    [selectedDate, mealType, mutate, router],
   )
 
   async function handleManualSubmit(values: {

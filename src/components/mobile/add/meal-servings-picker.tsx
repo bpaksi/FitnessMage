@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import type { Meal } from '@/lib/types/meal'
@@ -14,10 +14,11 @@ interface MealServingsPickerProps {
 
 export function MealServingsPicker({ meal, open, onClose, onConfirm }: MealServingsPickerProps) {
   const [servings, setServings] = useState(1)
-
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (prevOpen !== open) {
+    setPrevOpen(open)
     if (open) setServings(1)
-  }, [open])
+  }
 
   if (!meal) return null
 

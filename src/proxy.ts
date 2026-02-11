@@ -10,6 +10,14 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const response = NextResponse.next()
 
+  // Snapshot original cookie values so we only write Set-Cookie headers when
+  // a value actually changed. Without this guard @supabase/ssr re-serialises
+  // session cookies on every request, and the spurious Set-Cookie headers can
+  // cause Next.js to hard-navigate, remounting client components.
+  const originalCookies = new Map(
+    request.cookies.getAll().map((c) => [c.name, c.value]),
+  )
+
   // Create Supabase client to refresh session cookies
   const supabase = createServerClient(
     process.env.SUPABASE_URL!,
@@ -22,7 +30,9 @@ export async function proxy(request: NextRequest) {
         setAll(cookiesToSet) {
           for (const { name, value, options } of cookiesToSet) {
             request.cookies.set(name, value)
-            response.cookies.set(name, value, options)
+            if (originalCookies.get(name) !== value) {
+              response.cookies.set(name, value, options)
+            }
           }
         },
       },

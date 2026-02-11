@@ -16,11 +16,7 @@ const SETTINGS_SECTIONS = [
   { section: 'data', label: 'Data Management' },
 ] as const
 
-interface AppBarProps {
-  hasDevices: boolean
-}
-
-export function AppBar({ hasDevices: _hasDevices }: AppBarProps) {
+export function AppBar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const onSettings = pathname.startsWith('/settings')

@@ -7,17 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import type { Food } from '@/lib/types/food'
 
-interface FoodPickerDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface FoodPickerProps {
   onSelect: (food: Food) => void
 }
 
@@ -77,7 +69,7 @@ function SearchPanel({ onSelect }: { onSelect: (food: Food) => void }) {
           autoFocus
         />
       </div>
-      <div className="max-h-56 space-y-2 overflow-y-auto">
+      <div className="space-y-2">
         {searching && <p className="py-4 text-center text-sm text-[#64748b]">Searching...</p>}
         {!searching && query.length >= 2 && results.length === 0 && (
           <p className="py-4 text-center text-sm text-[#64748b]">No foods found</p>
@@ -113,7 +105,7 @@ function FavoritesPanel({ onSelect }: { onSelect: (food: Food) => void }) {
   }
 
   return (
-    <div className="max-h-56 space-y-2 overflow-y-auto">
+    <div className="space-y-2">
       {favorites.map((food) => (
         <FoodResultItem key={food.id} food={food} onSelect={onSelect} />
       ))}
@@ -144,7 +136,7 @@ function RecentPanel({ onSelect }: { onSelect: (food: Food) => void }) {
   }
 
   return (
-    <div className="max-h-56 space-y-2 overflow-y-auto">
+    <div className="space-y-2">
       {recent.map((food) => (
         <FoodResultItem key={food.id} food={food} onSelect={onSelect} />
       ))}
@@ -205,7 +197,7 @@ function ManualPanel({ onSelect }: { onSelect: (food: Food) => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-h-56 space-y-3 overflow-y-auto pr-1">
+    <form onSubmit={handleSubmit} className="space-y-3 pr-1">
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <Label className="text-xs text-[#94a3b8]">Name</Label>
@@ -285,55 +277,38 @@ function ManualPanel({ onSelect }: { onSelect: (food: Food) => void }) {
   )
 }
 
-export function FoodPickerDialog({ open, onOpenChange, onSelect }: FoodPickerDialogProps) {
+export function FoodPicker({ onSelect }: FoodPickerProps) {
   const [tab, setTab] = useState('search')
 
-  function handleSelect(food: Food) {
-    onSelect(food)
-    onOpenChange(false)
-  }
-
-  useEffect(() => {
-    if (!open) setTab('search')
-  }, [open])
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-[#1e293b] bg-[#0f172a] sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-[#f8fafc]">Add Food</DialogTitle>
-        </DialogHeader>
+    <Tabs value={tab} onValueChange={setTab}>
+      <TabsList className="grid w-full grid-cols-4 bg-[#020817]">
+        <TabsTrigger value="search" className="text-xs data-[state=active]:bg-[#1e293b]">
+          Search
+        </TabsTrigger>
+        <TabsTrigger value="favorites" className="text-xs data-[state=active]:bg-[#1e293b]">
+          Favorites
+        </TabsTrigger>
+        <TabsTrigger value="recent" className="text-xs data-[state=active]:bg-[#1e293b]">
+          Recent
+        </TabsTrigger>
+        <TabsTrigger value="manual" className="text-xs data-[state=active]:bg-[#1e293b]">
+          Manual
+        </TabsTrigger>
+      </TabsList>
 
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-4 bg-[#020817]">
-            <TabsTrigger value="search" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Search
-            </TabsTrigger>
-            <TabsTrigger value="favorites" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Favorites
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Recent
-            </TabsTrigger>
-            <TabsTrigger value="manual" className="text-xs data-[state=active]:bg-[#1e293b]">
-              Manual
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="search" className="mt-3">
-            <SearchPanel onSelect={handleSelect} />
-          </TabsContent>
-          <TabsContent value="favorites" className="mt-3">
-            <FavoritesPanel onSelect={handleSelect} />
-          </TabsContent>
-          <TabsContent value="recent" className="mt-3">
-            <RecentPanel onSelect={handleSelect} />
-          </TabsContent>
-          <TabsContent value="manual" className="mt-3">
-            <ManualPanel onSelect={handleSelect} />
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+      <TabsContent value="search" className="mt-3">
+        <SearchPanel onSelect={onSelect} />
+      </TabsContent>
+      <TabsContent value="favorites" className="mt-3">
+        <FavoritesPanel onSelect={onSelect} />
+      </TabsContent>
+      <TabsContent value="recent" className="mt-3">
+        <RecentPanel onSelect={onSelect} />
+      </TabsContent>
+      <TabsContent value="manual" className="mt-3">
+        <ManualPanel onSelect={onSelect} />
+      </TabsContent>
+    </Tabs>
   )
 }

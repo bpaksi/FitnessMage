@@ -201,8 +201,10 @@ export type Database = {
         Row: {
           barcode: string | null
           brand: string | null
+          calcium: number | null
           calories: number
           carbs: number
+          cholesterol: number | null
           contributed_at: string | null
           contribution_error: string | null
           contribution_status: string | null
@@ -210,22 +212,29 @@ export type Database = {
           fat: number
           fiber: number | null
           id: string
+          iron: number | null
           name: string
           pending_contribution: boolean | null
+          potassium: number | null
           protein: number
+          saturated_fat: number | null
           serving_size: string | null
           serving_size_grams: number | null
           sodium: number | null
           source: string
           sugar: number | null
+          trans_fat: number | null
           updated_at: string | null
           user_id: string | null
+          vitamin_d: number | null
         }
         Insert: {
           barcode?: string | null
           brand?: string | null
+          calcium?: number | null
           calories?: number
           carbs?: number
+          cholesterol?: number | null
           contributed_at?: string | null
           contribution_error?: string | null
           contribution_status?: string | null
@@ -233,22 +242,29 @@ export type Database = {
           fat?: number
           fiber?: number | null
           id?: string
+          iron?: number | null
           name: string
           pending_contribution?: boolean | null
+          potassium?: number | null
           protein?: number
+          saturated_fat?: number | null
           serving_size?: string | null
           serving_size_grams?: number | null
           sodium?: number | null
           source?: string
           sugar?: number | null
+          trans_fat?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vitamin_d?: number | null
         }
         Update: {
           barcode?: string | null
           brand?: string | null
+          calcium?: number | null
           calories?: number
           carbs?: number
+          cholesterol?: number | null
           contributed_at?: string | null
           contribution_error?: string | null
           contribution_status?: string | null
@@ -256,16 +272,21 @@ export type Database = {
           fat?: number
           fiber?: number | null
           id?: string
+          iron?: number | null
           name?: string
           pending_contribution?: boolean | null
+          potassium?: number | null
           protein?: number
+          saturated_fat?: number | null
           serving_size?: string | null
           serving_size_grams?: number | null
           sodium?: number | null
           source?: string
           sugar?: number | null
+          trans_fat?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vitamin_d?: number | null
         }
         Relationships: []
       }
@@ -313,6 +334,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          total_servings: number
           updated_at: string | null
           user_id: string
         }
@@ -320,6 +342,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          total_servings?: number
           updated_at?: string | null
           user_id: string
         }
@@ -327,6 +350,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          total_servings?: number
           updated_at?: string | null
           user_id?: string
         }
