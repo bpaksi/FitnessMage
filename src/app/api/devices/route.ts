@@ -1,14 +1,12 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
-    const admin = createAdminClient()
+    const { userId, supabase } = await resolveUser(request)
 
     // Clean up expired pending tokens (never accepted, past expiry)
-    await admin
+    await supabase
       .from('device_tokens')
       .delete()
       .eq('user_id', userId)
@@ -16,7 +14,7 @@ export async function GET(request: Request) {
       .lt('expires_at', new Date().toISOString())
 
     // Return only accepted devices (last_active_at is set on first verify)
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('device_tokens')
       .select('id, device_name, device_type, created_at, last_active_at, revoked')
       .eq('user_id', userId)

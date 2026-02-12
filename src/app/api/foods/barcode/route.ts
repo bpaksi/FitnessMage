@@ -5,7 +5,7 @@ import { barcodeLimiter } from '@/lib/api/rate-limit'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
 
@@ -15,10 +15,8 @@ export async function GET(request: Request) {
     const rateResult = await barcodeLimiter(userId)
     if (!rateResult.success) return error('Too many requests', 429)
 
-    const admin = createAdminClient()
-
-    // Check local DB first
-    const { data: existing } = await admin
+    // Check local DB first (user client sees own + shared foods via RLS)
+    const { data: existing } = await supabase
       .from('foods')
       .select('*')
       .eq('barcode', code)
@@ -39,7 +37,8 @@ export async function GET(request: Request) {
     const product = offData.product
     const nutriments = product.nutriments || {}
 
-    // Cache in local DB
+    // Cache in local DB using admin client (shared food, user_id: null)
+    const admin = createAdminClient()
     const { data: newFood, error: insertError } = await admin
       .from('foods')
       .insert({

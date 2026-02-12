@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function PATCH(
@@ -7,22 +6,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; foodId: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { supabase } = await resolveUser(request)
     const { id: mealId, foodId } = await params
     const body = await request.json()
-    const admin = createAdminClient()
 
-    // Verify meal ownership
-    const { data: meal } = await admin
-      .from('meals')
-      .select('user_id')
-      .eq('id', mealId)
-      .single()
-
-    if (!meal) return error('Meal not found', 404)
-    if (meal.user_id !== userId) return error('Not authorized', 403)
-
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('meal_foods')
       .update({ servings: body.servings })
       .eq('id', foodId)
@@ -33,7 +21,7 @@ export async function PATCH(
     if (dbError) return error(dbError.message)
 
     // Touch meal updated_at
-    await admin
+    await supabase
       .from('meals')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', mealId)
@@ -49,21 +37,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; foodId: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { supabase } = await resolveUser(request)
     const { id: mealId, foodId } = await params
-    const admin = createAdminClient()
 
-    // Verify meal ownership
-    const { data: meal } = await admin
-      .from('meals')
-      .select('user_id')
-      .eq('id', mealId)
-      .single()
-
-    if (!meal) return error('Meal not found', 404)
-    if (meal.user_id !== userId) return error('Not authorized', 403)
-
-    const { error: dbError } = await admin
+    const { error: dbError } = await supabase
       .from('meal_foods')
       .delete()
       .eq('id', foodId)
@@ -72,7 +49,7 @@ export async function DELETE(
     if (dbError) return error(dbError.message)
 
     // Touch meal updated_at
-    await admin
+    await supabase
       .from('meals')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', mealId)

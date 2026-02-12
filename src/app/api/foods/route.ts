@@ -1,12 +1,10 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const body = await request.json()
-    const admin = createAdminClient()
 
     if (!body.name || !body.serving_size) {
       return error('Name and serving size are required', 400)
@@ -14,7 +12,7 @@ export async function POST(request: Request) {
 
     const num = (v: unknown, fallback = 0) => (typeof v === 'number' && !isNaN(v) ? v : fallback)
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('foods')
       .insert({
         name: body.name,

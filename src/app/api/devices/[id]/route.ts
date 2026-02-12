@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function PATCH(
@@ -7,11 +6,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { id } = await params
-    const admin = createAdminClient()
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('device_tokens')
       .update({ revoked: true })
       .eq('id', id)
@@ -31,11 +29,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { id } = await params
-    const admin = createAdminClient()
 
-    const { error: dbError } = await admin
+    const { error: dbError } = await supabase
       .from('device_tokens')
       .delete()
       .eq('id', id)

@@ -6,7 +6,7 @@ import { searchUSDA, transformUSDAFood } from '@/lib/external/usda'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q')
 
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const canCallUSDA = apiKey ? await usdaSearchLimiter(userId) : null
 
     const [localResult, usdaResult] = await Promise.allSettled([
-      admin
+      supabase
         .from('foods')
         .select('*')
         .or(`name.ilike.%${q}%,brand.ilike.%${q}%`)
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     if (uniqueUSDA.length === 0) return ok(localFoods.slice(0, 25))
 
     // Cache new USDA foods in DB (best-effort, don't fail the request)
-    // Split into foods with barcodes and without for proper conflict handling
+    // Admin client for shared food inserts (user_id: null)
     const withBarcode = uniqueUSDA.filter((f) => f.barcode)
     const withoutBarcode = uniqueUSDA.filter((f) => !f.barcode)
 

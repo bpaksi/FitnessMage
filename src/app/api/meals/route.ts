@@ -1,14 +1,12 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import type { CreateMealInput } from '@/lib/types/meal'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
-    const admin = createAdminClient()
+    const { userId, supabase } = await resolveUser(request)
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('meals')
       .select('*, foods:meal_foods(*, food:foods(*))')
       .eq('user_id', userId)
@@ -23,14 +21,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const body: CreateMealInput = await request.json()
-    const admin = createAdminClient()
 
     if (!body.name?.trim()) return error('Meal name is required')
 
     // Insert meal
-    const { data: meal, error: mealError } = await admin
+    const { data: meal, error: mealError } = await supabase
       .from('meals')
       .insert({
         user_id: userId,
@@ -50,12 +47,12 @@ export async function POST(request: Request) {
         servings: f.servings,
       }))
 
-      const { error: foodsError } = await admin.from('meal_foods').insert(mealFoods)
+      const { error: foodsError } = await supabase.from('meal_foods').insert(mealFoods)
       if (foodsError) return error(foodsError.message)
     }
 
     // Return joined result
-    const { data: result, error: fetchError } = await admin
+    const { data: result, error: fetchError } = await supabase
       .from('meals')
       .select('*, foods:meal_foods(*, food:foods(*))')
       .eq('id', meal.id)

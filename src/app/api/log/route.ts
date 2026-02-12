@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { calculateMacros } from '@/lib/utils/macro-calc'
 import { getMealTypeForTime } from '@/lib/utils/meal-time'
@@ -9,14 +8,13 @@ import { ensureUserFood } from '@/lib/utils/ensure-user-food'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
 
     if (!date) return error('Date is required')
 
-    const admin = createAdminClient()
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('daily_log')
       .select('*, food:foods(id, name, serving_size, brand), meal:meals(id, name, total_servings)')
       .eq('user_id', userId)
@@ -32,12 +30,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const body = await request.json()
-    const admin = createAdminClient()
 
     // Get user settings for meal time boundaries
-    const { data: settings } = await admin
+    const { data: settings } = await supabase
       .from('user_settings')
       .select('meal_time_boundaries')
       .eq('user_id', userId)
@@ -49,7 +46,7 @@ export async function POST(request: Request) {
 
     if (body.meal_id) {
       // Log a meal: look up meal + meal_foods + foods, calculate total macros, divide by total_servings
-      const { data: meal, error: mealError } = await admin
+      const { data: meal, error: mealError } = await supabase
         .from('meals')
         .select('*, foods:meal_foods(*, food:foods(*))')
         .eq('id', body.meal_id)
@@ -77,7 +74,7 @@ export async function POST(request: Request) {
         fat: Math.round((mealTotals.fat / totalServings) * servings * 100) / 100,
       }
 
-      const { data, error: dbError } = await admin
+      const { data, error: dbError } = await supabase
         .from('daily_log')
         .insert({
           user_id: userId,
@@ -95,7 +92,7 @@ export async function POST(request: Request) {
     }
 
     // Log a food
-    const { data: food, error: foodError } = await admin
+    const { data: food, error: foodError } = await supabase
       .from('foods')
       .select('*')
       .eq('id', body.food_id)
@@ -104,11 +101,11 @@ export async function POST(request: Request) {
     if (foodError || !food) return error('Food not found', 404)
 
     // Ensure the user owns a copy of this food
-    const ownedFoodId = await ensureUserFood(admin, food as unknown as Food, userId)
+    const ownedFoodId = await ensureUserFood(supabase, food as unknown as Food, userId)
 
     const macros = calculateMacros(food as unknown as Food, servings)
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('daily_log')
       .insert({
         user_id: userId,

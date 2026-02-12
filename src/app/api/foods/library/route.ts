@@ -1,14 +1,12 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
-    const admin = createAdminClient()
+    const { userId, supabase } = await resolveUser(request)
 
     // 1. Get user's manual foods
-    const { data: manualFoods, error: manualError } = await admin
+    const { data: manualFoods, error: manualError } = await supabase
       .from('foods')
       .select('*')
       .eq('source', 'manual')
@@ -17,7 +15,7 @@ export async function GET(request: Request) {
     if (manualError) return error(manualError.message)
 
     // 2. Get distinct food_ids from the user's daily log
-    const { data: logEntries, error: logError } = await admin
+    const { data: logEntries, error: logError } = await supabase
       .from('daily_log')
       .select('food_id')
       .eq('user_id', userId)
@@ -35,7 +33,7 @@ export async function GET(request: Request) {
     // 3. Fetch logged foods not already in manual list
     let loggedFoods: typeof manualFoods = []
     if (loggedFoodIds.length > 0) {
-      const { data, error: foodsError } = await admin
+      const { data, error: foodsError } = await supabase
         .from('foods')
         .select('*')
         .in('id', loggedFoodIds)

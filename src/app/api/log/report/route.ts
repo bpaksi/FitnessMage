@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import type { ReportRange } from '@/lib/types/report'
 
@@ -59,17 +58,15 @@ function getDateRange(range: ReportRange, weekStartDay: string): { start: string
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const range = (searchParams.get('range') || 'this_week') as ReportRange
 
     const validRanges: ReportRange[] = ['this_week', 'last_week', 'this_month', 'last_30_days']
     if (!validRanges.includes(range)) return error('Invalid range')
 
-    const admin = createAdminClient()
-
     // Get user settings
-    const { data: settings } = await admin
+    const { data: settings } = await supabase
       .from('user_settings')
       .select('week_start_day, goals')
       .eq('user_id', userId)
@@ -80,7 +77,7 @@ export async function GET(request: Request) {
     const { start, end } = getDateRange(range, weekStartDay)
 
     // Query daily_log entries in range
-    const { data: entries, error: dbError } = await admin
+    const { data: entries, error: dbError } = await supabase
       .from('daily_log')
       .select('date, calories, protein, carbs, fat')
       .eq('user_id', userId)

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createUserClient } from '@/lib/supabase/user-client'
 import type { AuthResult } from './types'
 
 export async function resolveUser(request: Request): Promise<AuthResult> {
@@ -10,7 +11,8 @@ export async function resolveUser(request: Request): Promise<AuthResult> {
   } = await supabase.auth.getUser()
 
   if (user) {
-    return { userId: user.id, authMethod: 'session' }
+    const userClient = await createUserClient(user.id)
+    return { userId: user.id, authMethod: 'session', supabase: userClient }
   }
 
   // 2. Fallback: device token from Authorization header
@@ -40,5 +42,6 @@ export async function resolveUser(request: Request): Promise<AuthResult> {
     .update({ last_active_at: new Date().toISOString() })
     .eq('token', token)
 
-  return { userId: deviceToken.user_id, authMethod: 'device-token' }
+  const userClient = await createUserClient(deviceToken.user_id)
+  return { userId: deviceToken.user_id, authMethod: 'device-token', supabase: userClient }
 }

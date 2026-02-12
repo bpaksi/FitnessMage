@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function GET(
@@ -7,20 +6,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { supabase } = await resolveUser(request)
     const { id } = await params
-    const admin = createAdminClient()
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('foods')
       .select('*')
       .eq('id', id)
       .single()
 
     if (dbError) return error(dbError.message, 404)
-    if (data.user_id && data.user_id !== userId) {
-      return error('Not authorized', 403)
-    }
     return ok(data)
   } catch {
     return unauthorized()
@@ -32,24 +27,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { supabase } = await resolveUser(request)
     const { id } = await params
     const body = await request.json()
-    const admin = createAdminClient()
 
-    // Verify ownership
-    const { data: existing } = await admin
-      .from('foods')
-      .select('user_id')
-      .eq('id', id)
-      .single()
-
-    if (!existing) return error('Food not found', 404)
-    if (existing.user_id !== userId) {
-      return error('Not authorized to edit this food', 403)
-    }
-
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('foods')
       .update({
         name: body.name,
@@ -75,7 +57,7 @@ export async function PUT(
       .select()
       .single()
 
-    if (dbError) return error(dbError.message)
+    if (dbError) return error(dbError.message, 404)
     return ok(data)
   } catch {
     return unauthorized()
@@ -87,23 +69,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { supabase } = await resolveUser(request)
     const { id } = await params
-    const admin = createAdminClient()
 
-    // Verify ownership
-    const { data: existing } = await admin
-      .from('foods')
-      .select('user_id')
-      .eq('id', id)
-      .single()
+    const { error: dbError } = await supabase.from('foods').delete().eq('id', id)
 
-    if (!existing) return error('Food not found', 404)
-    if (existing.user_id !== userId) return error('Not authorized', 403)
-
-    const { error: dbError } = await admin.from('foods').delete().eq('id', id)
-
-    if (dbError) return error(dbError.message)
+    if (dbError) return error(dbError.message, 404)
     return ok({ success: true })
   } catch {
     return unauthorized()

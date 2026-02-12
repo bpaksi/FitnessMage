@@ -1,20 +1,17 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { EXTENDED_DAILY_VALUES, EXTENDED_NUTRIENT_KEYS } from '@/lib/constants/daily-values'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
 
     if (!date) return error('Date is required')
 
-    const admin = createAdminClient()
-
     // Get entries with extended nutrient data from foods
-    const { data: entries, error: logError } = await admin
+    const { data: entries, error: logError } = await supabase
       .from('daily_log')
       .select(`
         *,
@@ -28,7 +25,7 @@ export async function GET(request: Request) {
     if (logError) return error(logError.message)
 
     // Get goals
-    const { data: settings } = await admin
+    const { data: settings } = await supabase
       .from('user_settings')
       .select('goals')
       .eq('user_id', userId)

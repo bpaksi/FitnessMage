@@ -1,17 +1,14 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '15', 10)
 
-    const admin = createAdminClient()
-
     // Get recently logged food IDs, deduplicated
-    const { data: recentLogs, error: logError } = await admin
+    const { data: recentLogs, error: logError } = await supabase
       .from('daily_log')
       .select('food_id, logged_at')
       .eq('user_id', userId)
@@ -34,7 +31,7 @@ export async function GET(request: Request) {
 
     if (foodIds.length === 0) return ok([])
 
-    const { data: foods, error: foodError } = await admin
+    const { data: foods, error: foodError } = await supabase
       .from('foods')
       .select('*')
       .in('id', foodIds)

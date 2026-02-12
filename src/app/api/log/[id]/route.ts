@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { calculateMacros } from '@/lib/utils/macro-calc'
 import type { Food } from '@/lib/types/food'
@@ -9,13 +8,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { id } = await params
     const body = await request.json()
-    const admin = createAdminClient()
 
     // Get current entry
-    const { data: entry } = await admin
+    const { data: entry } = await supabase
       .from('daily_log')
       .select('*, food:foods(*)')
       .eq('id', id)
@@ -40,7 +38,7 @@ export async function PATCH(
       updates.meal_type = body.meal_type
     }
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('daily_log')
       .update(updates)
       .eq('id', id)
@@ -60,11 +58,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { id } = await params
-    const admin = createAdminClient()
 
-    const { error: dbError } = await admin
+    const { error: dbError } = await supabase
       .from('daily_log')
       .delete()
       .eq('id', id)

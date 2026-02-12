@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createUserClient } from '@/lib/supabase/user-client'
 import { NoDevicesBanner } from '@/components/web/no-devices-banner'
 import { SideNav } from '@/components/web/side-nav'
 
@@ -13,8 +13,8 @@ export default async function WebLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/landing')
 
-  const admin = createAdminClient()
-  const { count } = await admin
+  const userClient = await createUserClient(user.id)
+  const { count } = await userClient
     .from('device_tokens')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)

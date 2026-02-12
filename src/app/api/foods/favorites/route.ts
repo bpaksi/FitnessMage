@@ -1,13 +1,11 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
-    const admin = createAdminClient()
+    const { userId, supabase } = await resolveUser(request)
 
-    const { data, error: dbError } = await admin
+    const { data, error: dbError } = await supabase
       .from('food_favorites')
       .select('food_id, foods(*)')
       .eq('user_id', userId)
@@ -24,11 +22,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { food_id } = await request.json()
-    const admin = createAdminClient()
 
-    const { error: dbError } = await admin
+    const { error: dbError } = await supabase
       .from('food_favorites')
       .insert({ user_id: userId, food_id })
 
@@ -44,11 +41,10 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { food_id } = await request.json()
-    const admin = createAdminClient()
 
-    const { error: dbError } = await admin
+    const { error: dbError } = await supabase
       .from('food_favorites')
       .delete()
       .eq('user_id', userId)

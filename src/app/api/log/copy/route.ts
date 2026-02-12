@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { calculateMacros } from '@/lib/utils/macro-calc'
 import type { Food } from '@/lib/types/food'
@@ -7,17 +6,15 @@ import { ensureUserFood } from '@/lib/utils/ensure-user-food'
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { sourceDate, sourceMealType, targetDate, targetMealType } = await request.json()
 
     if (!sourceDate || !sourceMealType || !targetDate) {
       return error('sourceDate, sourceMealType, and targetDate are required')
     }
 
-    const admin = createAdminClient()
-
     // Get source entries
-    const { data: sourceEntries, error: sourceError } = await admin
+    const { data: sourceEntries, error: sourceError } = await supabase
       .from('daily_log')
       .select('food_id, servings, meal_type, food:foods(*)')
       .eq('user_id', userId)
@@ -33,7 +30,7 @@ export async function POST(request: Request) {
     const newEntries = await Promise.all(
       sourceEntries.map(async (entry) => {
         const food = entry.food as unknown as Food
-        const ownedFoodId = await ensureUserFood(admin, food, userId)
+        const ownedFoodId = await ensureUserFood(supabase, food, userId)
         const macros = calculateMacros(food, entry.servings)
         return {
           user_id: userId,
@@ -46,7 +43,7 @@ export async function POST(request: Request) {
       }),
     )
 
-    const { data, error: insertError } = await admin
+    const { data, error: insertError } = await supabase
       .from('daily_log')
       .insert(newEntries)
       .select('*, food:foods(id, name, serving_size, brand)')

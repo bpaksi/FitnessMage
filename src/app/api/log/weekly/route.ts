@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 
 const DAY_MAP: Record<string, number> = {
@@ -34,16 +33,14 @@ function getWeekDates(weekOf: string, weekStartDay: string): string[] {
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await resolveUser(request)
+    const { userId, supabase } = await resolveUser(request)
     const { searchParams } = new URL(request.url)
     const weekOf = searchParams.get('weekOf')
 
     if (!weekOf) return error('weekOf is required')
 
-    const admin = createAdminClient()
-
     // Get user settings for week_start_day and goals
-    const { data: settings } = await admin
+    const { data: settings } = await supabase
       .from('user_settings')
       .select('week_start_day, goals')
       .eq('user_id', userId)
@@ -57,7 +54,7 @@ export async function GET(request: Request) {
     const dates = getWeekDates(weekOf, weekStartDay)
 
     // Get all logs for the week (include food name for water detection)
-    const { data: entries, error: dbError } = await admin
+    const { data: entries, error: dbError } = await supabase
       .from('daily_log')
       .select('date, calories, protein, carbs, fat, servings, food_id, food:foods(name)')
       .eq('user_id', userId)
