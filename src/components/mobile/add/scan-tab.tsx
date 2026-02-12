@@ -65,7 +65,7 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
   }
 
   if (error || timedOut) {
-    const title = error ? 'Could not scan barcode' : 'No barcode detected'
+    const title = error ? 'Product not found' : 'No barcode detected'
     const subtitle = error
       ? 'We couldn\u0027t find this product in our database'
       : 'Try holding the camera steady with the barcode inside the rectangle'
@@ -77,6 +77,11 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
           </svg>
           <p className="mt-3 text-sm font-medium text-[#f8fafc]">{title}</p>
+          {lastScannedCode && (
+            <p className="mt-1.5 rounded bg-[#020817] px-2.5 py-1 font-mono text-xs text-[#94a3b8] tabular-nums">
+              {lastScannedCode}
+            </p>
+          )}
           <p className="mt-1 text-center text-xs text-[#64748b]">{subtitle}</p>
         </div>
 
