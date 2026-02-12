@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await resolveUser(request)
+    const { userId } = await resolveUser(request)
     const { id } = await params
     const admin = createAdminClient()
 
@@ -18,6 +18,9 @@ export async function GET(
       .single()
 
     if (dbError) return error(dbError.message, 404)
+    if (data.user_id && data.user_id !== userId) {
+      return error('Not authorized', 403)
+    }
     return ok(data)
   } catch {
     return unauthorized()
