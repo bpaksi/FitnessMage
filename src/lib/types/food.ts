@@ -43,7 +43,7 @@ export interface Food {
   caffeine: number | null
   alcohol: number | null
   water_content: number | null
-  source: 'openfoodfacts' | 'usda' | 'manual'
+  source: 'openfoodfacts' | 'usda' | 'manual' | 'dsld'
   user_id: string | null
   created_at: string
   updated_at: string

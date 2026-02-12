@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { barcodeLimiter } from '@/lib/api/rate-limit'
 import { searchUSDA, transformUSDAFood } from '@/lib/external/usda'
+import { searchDSLD, fetchDSLDLabel, transformDSLDFood } from '@/lib/external/dsld'
 import type { Database } from '@/lib/supabase'
 
 type FoodInsert = Database['public']['Tables']['foods']['Insert']
@@ -146,10 +147,28 @@ export async function GET(request: Request) {
     const offFood = offProduct ? buildOFFFood(code, offProduct, nutriments, supplement) : null
     const offEmpty = offFood ? isFoodDataEmpty(offFood) : true
 
-    // Fall back to USDA when OFF has no nutritional data
+    // Try DSLD for supplements (accurate label data)
+    let dsldFood: ReturnType<typeof transformDSLDFood> | null = null
+    if (supplement && offProduct) {
+      try {
+        const productName = offProduct.product_name as string
+        const brand = offProduct.brands as string | undefined
+        const results = await searchDSLD(productName, brand)
+        if (results.length > 0) {
+          const label = await fetchDSLDLabel(results[0].id)
+          if (label) {
+            dsldFood = transformDSLDFood(label)
+          }
+        }
+      } catch {
+        // DSLD lookup failed — fall through to USDA
+      }
+    }
+
+    // Fall back to USDA when OFF has no nutritional data and DSLD didn't match
     let usdaFood: ReturnType<typeof transformUSDAFood> = null
     const apiKey = process.env.USDA_API_KEY
-    if (offEmpty && apiKey) {
+    if (offEmpty && !dsldFood && apiKey) {
       try {
         let results = await searchUSDA(code, apiKey)
         if (results.length === 0 && offProduct?.product_name) {
@@ -173,7 +192,15 @@ export async function GET(request: Request) {
 
     // Pick best available data
     let foodData: FoodInsert
-    if (usdaFood) {
+    if (dsldFood) {
+      foodData = {
+        ...dsldFood,
+        barcode: code,
+        // Prefer OFF product name/brand — consumer-friendly
+        ...(offProduct?.product_name ? { name: offProduct.product_name as string } : {}),
+        ...(offProduct?.brands ? { brand: offProduct.brands as string } : {}),
+      }
+    } else if (usdaFood) {
       foodData = {
         ...usdaFood,
         barcode: code,

@@ -1,0 +1,5 @@
+-- Allow 'dsld' as a food source value.
+-- The source column is plain TEXT with no CHECK constraint,
+-- so no schema change is required. This migration documents
+-- that 'dsld' (NIH Dietary Supplement Label Database) is now
+-- a valid source alongside 'openfoodfacts', 'usda', and 'manual'.

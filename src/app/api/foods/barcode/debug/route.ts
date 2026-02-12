@@ -2,6 +2,7 @@ import { resolveUser } from '@/lib/auth/resolve-user'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { barcodeLimiter } from '@/lib/api/rate-limit'
 import { searchUSDA, transformUSDAFood } from '@/lib/external/usda'
+import { searchDSLD, fetchDSLDLabel, transformDSLDFood } from '@/lib/external/dsld'
 
 const MICRO_FIELDS = [
   'fiber', 'sugar', 'sodium', 'saturated_fat', 'trans_fat', 'cholesterol',
@@ -66,7 +67,29 @@ export async function GET(request: Request) {
 
     const supplement = detectSupplement(offProduct?.categories as string | undefined)
 
-    // Step 3: USDA lookup
+    // Step 3: DSLD lookup (supplements only)
+    let dsldSearchResults: unknown = null
+    let dsldSelectedLabel: unknown = null
+    let dsldTransformed: unknown = null
+    if (supplement && offProduct) {
+      try {
+        const productName = offProduct.product_name as string
+        const brand = offProduct.brands as string | undefined
+        const results = await searchDSLD(productName, brand)
+        dsldSearchResults = results
+        if (results.length > 0) {
+          const label = await fetchDSLDLabel(results[0].id)
+          dsldSelectedLabel = label
+          if (label) {
+            dsldTransformed = transformDSLDFood(label)
+          }
+        }
+      } catch (e) {
+        dsldSearchResults = { error: e instanceof Error ? e.message : 'DSLD fetch failed' }
+      }
+    }
+
+    // Step 4: USDA lookup
     const apiKey = process.env.USDA_API_KEY
     let usdaByUpc: unknown = null
     let usdaByName: unknown = null
@@ -100,6 +123,8 @@ export async function GET(request: Request) {
     let processed: unknown
     if (localDb && !localDbEmpty) {
       processed = { action: 'returned_cached', food: localDb }
+    } else if (dsldTransformed) {
+      processed = { action: 'would_return_dsld', food: dsldTransformed }
     } else if (usdaTransformed) {
       processed = { action: 'would_return_usda', food: usdaTransformed }
     } else if (offProduct) {
@@ -126,6 +151,11 @@ export async function GET(request: Request) {
           nutriments: offProduct.nutriments,
         } : null,
         raw: offRaw,
+      },
+      dsld: {
+        searchResults: dsldSearchResults,
+        selectedLabel: dsldSelectedLabel,
+        transformed: dsldTransformed,
       },
       usda: {
         apiKeyConfigured: !!apiKey,
