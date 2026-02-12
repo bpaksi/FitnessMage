@@ -91,7 +91,10 @@ export async function searchUSDA(query: string, apiKey: string): Promise<USDAFoo
   return data.foods ?? []
 }
 
-export function transformUSDAFood(food: USDAFood) {
+export function transformUSDAFood(
+  food: USDAFood,
+  options?: { allowEmptyMacros?: boolean },
+) {
   const nutrients: Record<string, number> = {}
   for (const n of food.foodNutrients) {
     const key = NUTRIENT_MAP[n.nutrientId]
@@ -99,10 +102,11 @@ export function transformUSDAFood(food: USDAFood) {
   }
 
   if (
-    nutrients.calories == null ||
-    nutrients.protein == null ||
-    nutrients.carbs == null ||
-    nutrients.fat == null
+    !options?.allowEmptyMacros &&
+    (nutrients.calories == null ||
+      nutrients.protein == null ||
+      nutrients.carbs == null ||
+      nutrients.fat == null)
   ) {
     return null
   }
@@ -134,10 +138,10 @@ export function transformUSDAFood(food: USDAFood) {
     barcode: food.gtinUpc || null,
     serving_size,
     serving_size_grams,
-    calories: Math.round(nutrients.calories),
-    protein: round1(nutrients.protein),
-    carbs: round1(nutrients.carbs),
-    fat: round1(nutrients.fat),
+    calories: Math.round(nutrients.calories ?? 0),
+    protein: round1(nutrients.protein ?? 0),
+    carbs: round1(nutrients.carbs ?? 0),
+    fat: round1(nutrients.fat ?? 0),
     fiber: nutrients.fiber != null ? round1(nutrients.fiber) : null,
     sugar: nutrients.sugar != null ? round1(nutrients.sugar) : null,
     sodium: nutrients.sodium != null ? Math.round(nutrients.sodium) : null,

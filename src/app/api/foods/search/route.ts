@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
     // Transform and filter USDA results
     const usdaFoods = usdaRaw
-      .map(transformUSDAFood)
+      .map((f) => transformUSDAFood(f))
       .filter((f): f is NonNullable<typeof f> => f !== null)
 
     if (usdaFoods.length === 0) return ok(localFoods.slice(0, 25))
