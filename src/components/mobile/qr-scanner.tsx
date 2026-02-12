@@ -79,6 +79,12 @@ export function QrScanner({ onScan, onError, onTimeout }: QrScannerProps) {
         const video = videoRef.current
         if (!video) return
         video.srcObject = stream
+
+        // Wait for stream metadata before playing — prevents hang on mobile Safari
+        await new Promise<void>((resolve, reject) => {
+          video.onloadedmetadata = () => resolve()
+          setTimeout(() => reject(new Error('Camera stream timed out')), 10_000)
+        })
         await video.play()
         if (!mounted) return
 

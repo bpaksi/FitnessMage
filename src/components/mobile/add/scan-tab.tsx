@@ -9,7 +9,13 @@ import { FoodDetailCard } from './food-detail-card'
 import type { Food } from '@/lib/types/food'
 
 const QrScanner = dynamic(
-  () => import('@/components/mobile/qr-scanner').then((mod) => ({ default: mod.QrScanner })),
+  () =>
+    import('@/components/mobile/qr-scanner').then((mod) => ({ default: mod.QrScanner })).catch(() => ({
+      default: ({ onError }: { onError?: (e: string) => void }) => {
+        onError?.('Failed to load camera. Please refresh and try again.')
+        return null
+      },
+    })),
   { ssr: false, loading: () => <div className="flex items-center justify-center bg-black text-sm text-[#64748b]" style={{ height: '60svh' }}>Starting camera...</div> },
 )
 
