@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, error, unauthorized } from '@/lib/api/response'
 import { barcodeLimiter } from '@/lib/api/rate-limit'
 import { searchUSDA, transformUSDAFood } from '@/lib/external/usda'
-import { searchDSLD, fetchDSLDLabel, transformDSLDFood } from '@/lib/external/dsld'
+import { searchDSLD, fetchDSLDLabel, transformDSLDFood, pickBestDSLDMatch } from '@/lib/external/dsld'
 import type { Database } from '@/lib/supabase'
 
 type FoodInsert = Database['public']['Tables']['foods']['Insert']
@@ -154,8 +154,9 @@ export async function GET(request: Request) {
         const productName = offProduct.product_name as string
         const brand = offProduct.brands as string | undefined
         const results = await searchDSLD(productName, brand)
-        if (results.length > 0) {
-          const label = await fetchDSLDLabel(results[0].id)
+        const bestMatch = pickBestDSLDMatch(results, productName)
+        if (bestMatch) {
+          const label = await fetchDSLDLabel(bestMatch.id)
           if (label) {
             dsldFood = transformDSLDFood(label)
           }

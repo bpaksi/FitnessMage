@@ -82,6 +82,45 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10
 }
 
+/**
+ * Pick the best DSLD result, trusting the API relevance score but
+ * filtering out results with clear demographic mismatches.
+ * Results are already sorted by API score (best first).
+ */
+export function pickBestDSLDMatch(
+  results: DSLDSearchResult[],
+  offProductName: string,
+): DSLDSearchResult | null {
+  if (results.length === 0) return null
+
+  const off = offProductName.toLowerCase()
+
+  for (const r of results) {
+    const dsld = r.fullName.toLowerCase()
+
+    // Gender mismatch: OFF says "men" but DSLD says "women" (or vice versa)
+    const offMen = /\bmen\b/.test(off) && !/\bwomen\b/.test(off)
+    const offWomen = /\bwomen\b/.test(off)
+    const dsldMen = /\bmen\b/.test(dsld) && !/\bwomen\b/.test(dsld)
+    const dsldWomen = /\bwomen\b/.test(dsld)
+    if ((offMen && dsldWomen) || (offWomen && dsldMen)) continue
+
+    // Age group mismatch: OFF says "50+" but DSLD says "kids" (or vice versa)
+    const offAdult = /\b(50|adult|senior)\b/.test(off)
+    const dsldKids = /\b(kids?|child|children|teens?)\b/.test(dsld)
+    if (offAdult && dsldKids) continue
+
+    const offKids = /\b(kids?|child|children|teens?)\b/.test(off)
+    const dsldAdult = /\b(50|adult|senior)\b/.test(dsld)
+    if (offKids && dsldAdult) continue
+
+    return r
+  }
+
+  // All results filtered out — return first as fallback
+  return results[0]
+}
+
 export async function searchDSLD(
   productName: string,
   brand?: string,
