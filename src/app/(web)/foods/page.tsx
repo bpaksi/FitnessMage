@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { FoodEditor } from '@/components/web/food-editor'
+import { FoodDetailCard } from '@/components/mobile/add/food-detail-card'
 import type { Food } from '@/lib/types/food'
 
 type View = 'list' | 'food-editor' | 'barcode-debug'
@@ -371,7 +372,9 @@ export default function FoodsPage() {
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 {food.source !== 'manual' && (
-                                  <span className="mr-1 text-xs text-[#64748b]">{food.source === 'usda' ? 'USDA' : 'OFF'}</span>
+                                  <span className="mr-1 text-xs text-[#64748b]">
+                                    {food.source === 'usda' ? 'USDA' : food.source === 'dsld' ? 'DSLD' : 'OFF'}
+                                  </span>
                                 )}
                                 <Button
                                   variant="ghost"
@@ -484,10 +487,128 @@ export default function FoodsPage() {
             </Button>
           </div>
 
+          {/* Visual preview — same component the phone renders */}
+          {barcodeMainResult != null && !('error' in (barcodeMainResult as Record<string, unknown>)) && (
+            <div className="max-w-sm">
+              <FoodDetailCard
+                food={barcodeMainResult as Food}
+                onAdd={() => {}}
+                onCancel={() => {
+                  setBarcodeMainResult(null)
+                  setBarcodeResult(null)
+                }}
+              />
+            </div>
+          )}
+
+          {/* Flow — step-by-step in the same order as the barcode route */}
+          {barcodeResult != null && (() => {
+            const d = barcodeResult as Record<string, unknown>
+            const localDb = d.localDb as Record<string, unknown> | undefined
+            const off = d.openFoodFacts as Record<string, unknown> | undefined
+            const dsld = d.dsld as Record<string, unknown> | undefined
+            const usda = d.usda as Record<string, unknown> | undefined
+            const processed = d.processed as Record<string, unknown> | undefined
+            const isSupplement = d.supplement === true
+            const offProduct = off?.product as Record<string, unknown> | null | undefined
+
+            const steps: { label: string; status: 'pass' | 'fail' | 'skip' | 'info'; detail?: string }[] = []
+
+            // 1. Local DB
+            if (localDb?.hasData) {
+              steps.push({ label: 'Local DB', status: 'pass', detail: 'Cached food with data found' })
+            } else if (localDb?.result) {
+              steps.push({ label: 'Local DB', status: 'fail', detail: 'Cached row exists but empty data' })
+            } else {
+              steps.push({ label: 'Local DB', status: 'fail', detail: 'No cached food' })
+            }
+
+            // 2. OpenFoodFacts
+            if (off?.productFound) {
+              steps.push({ label: 'OpenFoodFacts', status: 'pass', detail: `${offProduct?.product_name ?? 'Unknown'} — ${offProduct?.brands ?? 'No brand'}` })
+            } else {
+              steps.push({ label: 'OpenFoodFacts', status: 'fail', detail: `HTTP ${off?.httpStatus ?? '?'} — product not found` })
+            }
+
+            // 3. Supplement detection
+            if (isSupplement) {
+              steps.push({ label: 'Supplement detected', status: 'info', detail: `Categories: ${(offProduct?.categories as string) || '—'}` })
+            }
+
+            // 4. DSLD (only for supplements)
+            if (isSupplement) {
+              const dsldResults = dsld?.searchResults
+              const dsldLabel = dsld?.selectedLabel
+              const dsldTransformed = dsld?.transformed
+              if (dsldTransformed) {
+                const t = dsldTransformed as Record<string, unknown>
+                steps.push({ label: 'DSLD', status: 'pass', detail: `Matched: ${t.name} — ${t.serving_size}` })
+              } else if (Array.isArray(dsldResults) && dsldResults.length > 0 && !dsldLabel) {
+                steps.push({ label: 'DSLD', status: 'fail', detail: `${dsldResults.length} search hit(s) but label fetch failed` })
+              } else if (Array.isArray(dsldResults) && dsldResults.length === 0) {
+                steps.push({ label: 'DSLD', status: 'fail', detail: 'No search results' })
+              } else {
+                steps.push({ label: 'DSLD', status: 'fail', detail: 'No results' })
+              }
+            } else {
+              steps.push({ label: 'DSLD', status: 'skip', detail: 'Skipped — not a supplement' })
+            }
+
+            // 5. USDA
+            if (usda?.transformed) {
+              const t = usda.transformed as Record<string, unknown>
+              steps.push({ label: 'USDA', status: 'pass', detail: `${t.name}` })
+            } else if (!usda?.apiKeyConfigured) {
+              steps.push({ label: 'USDA', status: 'skip', detail: 'No API key configured' })
+            } else if (dsld?.transformed) {
+              steps.push({ label: 'USDA', status: 'skip', detail: 'Skipped — DSLD provided data' })
+            } else {
+              steps.push({ label: 'USDA', status: 'fail', detail: 'No matching food found' })
+            }
+
+            // 6. Result
+            const action = processed?.action as string | undefined
+            const sourceMap: Record<string, string> = {
+              returned_cached: 'Local DB (cached)',
+              would_return_dsld: 'DSLD',
+              would_return_usda: 'USDA',
+              would_return_off: 'OpenFoodFacts',
+              not_found: 'Not found',
+            }
+            steps.push({ label: `Result: ${sourceMap[action ?? ''] ?? action ?? '?'}`, status: action === 'not_found' ? 'fail' : 'pass' })
+
+            const statusColors = {
+              pass: 'bg-green-500',
+              fail: 'bg-red-500',
+              skip: 'bg-[#64748b]',
+              info: 'bg-[#a78bfa]',
+            }
+
+            return (
+              <Card className="border-[#1e293b] bg-[#0f172a]">
+                <CardContent className="p-4">
+                  <p className="mb-3 text-xs font-medium uppercase tracking-wider text-[#f8fafc]">Lookup Flow</p>
+                  <div className="space-y-2">
+                    {steps.map((step, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${statusColors[step.status]}`} />
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium text-[#f8fafc]">{step.label}</span>
+                          {step.detail && <p className="text-xs text-[#64748b]">{step.detail}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
+
+          {/* Raw JSON dumps for debugging */}
           {barcodeMainResult != null && (
             <Card className="border-[#1e293b] bg-[#0f172a]">
               <CardContent className="p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#f8fafc]">Scan Result (what mobile sees)</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#64748b]">Scan Result JSON</p>
                 <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
                   {JSON.stringify(barcodeMainResult, null, 2)}
                 </pre>
@@ -498,7 +619,7 @@ export default function FoodsPage() {
           {barcodeResult != null && (
             <Card className="border-[#1e293b] bg-[#0f172a]">
               <CardContent className="p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#64748b]">Debug (all sources)</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#64748b]">Debug JSON (all sources)</p>
                 <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
                   {JSON.stringify(barcodeResult, null, 2)}
                 </pre>

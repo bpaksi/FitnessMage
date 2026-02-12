@@ -10,9 +10,7 @@ interface DSLDSearchHit {
 }
 
 interface DSLDSearchResponse {
-  hits: {
-    hits: DSLDSearchHit[]
-  }
+  hits: DSLDSearchHit[]
 }
 
 interface DSLDIngredientQuantity {
@@ -102,7 +100,7 @@ export async function searchDSLD(
     if (!res.ok) return []
 
     const data: DSLDSearchResponse = await res.json()
-    const hits = data.hits?.hits ?? []
+    const hits = data.hits ?? []
 
     return hits.map((h) => ({
       id: h._id,
