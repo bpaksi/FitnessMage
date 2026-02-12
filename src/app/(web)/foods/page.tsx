@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, BookOpen, Pencil, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill } from 'lucide-react'
+import { Plus, BookOpen, Star, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,13 +21,33 @@ import { FoodEditor } from '@/components/web/food-editor'
 import type { Food } from '@/lib/types/food'
 
 type View = 'list' | 'food-editor'
-type SortColumn = 'name' | 'calories' | 'protein' | 'carbs' | 'fat'
+type SortColumn = 'name' | 'calories' | 'protein' | 'carbs' | 'fat' | 'created_at'
 type SortDirection = 'asc' | 'desc'
 
 const PAGE_SIZE = 20
 
+const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+
+function formatRelativeTime(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const seconds = Math.floor(diff / 1000)
+  if (seconds < 60) return rtf.format(-seconds, 'second')
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return rtf.format(-minutes, 'minute')
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return rtf.format(-hours, 'hour')
+  const days = Math.floor(hours / 24)
+  if (days < 7) return rtf.format(-days, 'day')
+  const weeks = Math.floor(days / 7)
+  if (weeks < 4) return rtf.format(-weeks, 'week')
+  const months = Math.floor(days / 30)
+  if (months < 12) return rtf.format(-months, 'month')
+  return rtf.format(-Math.floor(days / 365), 'year')
+}
+
 export default function FoodsPage() {
   const [foods, setFoods] = useState<Food[]>([])
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [editingFood, setEditingFood] = useState<Food | null>(null)
   const [view, setView] = useState<View>('list')
@@ -58,6 +78,8 @@ export default function FoodsPage() {
       let cmp: number
       if (sortColumn === 'name') {
         cmp = a.name.localeCompare(b.name)
+      } else if (sortColumn === 'created_at') {
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       } else {
         cmp = a[sortColumn] - b[sortColumn]
       }
@@ -95,8 +117,15 @@ export default function FoodsPage() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch('/api/foods/library')
-      if (res.ok) setFoods(await res.json())
+      const [libRes, favRes] = await Promise.all([
+        fetch('/api/foods/library'),
+        fetch('/api/foods/favorites'),
+      ])
+      if (libRes.ok) setFoods(await libRes.json())
+      if (favRes.ok) {
+        const favFoods: Food[] = await favRes.json()
+        setFavoriteIds(new Set(favFoods.map((f) => f.id)))
+      }
       setLoading(false)
     })()
   }, [])
@@ -104,6 +133,31 @@ export default function FoodsPage() {
   async function fetchFoods() {
     const res = await fetch('/api/foods/library')
     if (res.ok) setFoods(await res.json())
+  }
+
+  async function toggleFavorite(foodId: string) {
+    const isFavorite = favoriteIds.has(foodId)
+    // Optimistic update
+    setFavoriteIds((prev) => {
+      const next = new Set(prev)
+      if (isFavorite) next.delete(foodId)
+      else next.add(foodId)
+      return next
+    })
+    const res = await fetch('/api/foods/favorites', {
+      method: isFavorite ? 'DELETE' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ food_id: foodId }),
+    })
+    if (!res.ok) {
+      // Revert on failure
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        if (isFavorite) next.add(foodId)
+        else next.delete(foodId)
+        return next
+      })
+    }
   }
 
   async function deleteFood(id: string) {
@@ -142,7 +196,7 @@ export default function FoodsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8">
       {/* Breadcrumb navigation */}
       <nav className="flex items-center gap-1.5 text-sm">
         {view === 'list' ? (
@@ -250,12 +304,22 @@ export default function FoodsPage() {
                           >
                             F {renderSortIcon('fat')}
                           </th>
+                          <th
+                            className="cursor-pointer px-4 py-3 text-right text-xs font-medium text-[#64748b] hover:text-[#f8fafc] transition-colors"
+                            onClick={() => handleSort('created_at')}
+                          >
+                            Added {renderSortIcon('created_at')}
+                          </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-[#64748b]"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginated.map((food) => (
-                          <tr key={food.id} className="border-b border-[#1e293b] last:border-0">
+                          <tr
+                            key={food.id}
+                            onClick={() => openEditFood(food)}
+                            className="cursor-pointer border-b border-[#1e293b] last:border-0 hover:bg-[#1e293b]/50 transition-colors"
+                          >
                             <td className="px-4 py-3">
                               <p className="text-sm text-[#f8fafc]">
                                 {food.category === 'supplement' && <Pill size={14} className="mr-1 inline text-[#a78bfa]" />}
@@ -268,6 +332,7 @@ export default function FoodsPage() {
                             <td className="px-4 py-3 text-right text-sm text-[#ef4444]">{food.protein}g</td>
                             <td className="px-4 py-3 text-right text-sm text-[#3b82f6]">{food.carbs}g</td>
                             <td className="px-4 py-3 text-right text-sm text-[#eab308]">{food.fat}g</td>
+                            <td className="px-4 py-3 text-right text-xs text-[#64748b]">{formatRelativeTime(food.created_at)}</td>
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 {food.source !== 'manual' && (
@@ -276,16 +341,17 @@ export default function FoodsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => openEditFood(food)}
-                                  className="h-8 w-8 p-0 text-[#64748b] hover:text-[#f8fafc]"
+                                  onClick={(e) => { e.stopPropagation(); toggleFavorite(food.id) }}
+                                  className={`h-8 w-8 p-0 ${favoriteIds.has(food.id) ? 'text-[#eab308]' : 'text-[#64748b] hover:text-[#eab308]'}`}
                                 >
-                                  <Pencil className="h-3.5 w-3.5" />
+                                  <Star className={`h-3.5 w-3.5 ${favoriteIds.has(food.id) ? 'fill-current' : ''}`} />
                                 </Button>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
                                       variant="ghost"
                                       size="sm"
+                                      onClick={(e) => e.stopPropagation()}
                                       className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-400"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
