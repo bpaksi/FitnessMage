@@ -27,8 +27,9 @@ interface DSLDIngredientRow {
 }
 
 interface DSLDServingSize {
-  servingSize: string
-  servingSizeUnit: string
+  minQuantity: number
+  maxQuantity: number
+  unit: string
 }
 
 export interface DSLDLabel {
@@ -144,7 +145,7 @@ export function transformDSLDFood(label: DSLDLabel) {
 
   const servingSize = label.servingSizes?.[0]
   const serving = servingSize
-    ? `${servingSize.servingSize} ${servingSize.servingSizeUnit}`.trim()
+    ? `${servingSize.minQuantity} ${servingSize.unit}`.trim()
     : '1 serving'
 
   return {
