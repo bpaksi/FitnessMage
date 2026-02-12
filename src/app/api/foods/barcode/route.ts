@@ -152,7 +152,7 @@ export async function GET(request: Request) {
     if (offEmpty && apiKey) {
       try {
         let results = await searchUSDA(code, apiKey)
-        if (results.length === 0 && offProduct?.product_name) {
+        if (results.length === 0 && offProduct?.product_name && !supplement) {
           results = await searchUSDA(offProduct.product_name as string, apiKey)
           // Prefer branded items — survey/research entries have unusable names
           results.sort((a, b) =>
