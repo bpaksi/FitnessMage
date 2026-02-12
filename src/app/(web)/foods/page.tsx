@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, BookOpen, Star, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill } from 'lucide-react'
+import { Plus, BookOpen, Star, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill, ScanBarcode } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +20,7 @@ import {
 import { FoodEditor } from '@/components/web/food-editor'
 import type { Food } from '@/lib/types/food'
 
-type View = 'list' | 'food-editor'
+type View = 'list' | 'food-editor' | 'barcode-debug'
 type SortColumn = 'name' | 'calories' | 'protein' | 'carbs' | 'fat' | 'created_at'
 type SortDirection = 'asc' | 'desc'
 
@@ -56,6 +56,9 @@ export default function FoodsPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [page, setPage] = useState(1)
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'food' | 'supplement'>('all')
+  const [barcodeInput, setBarcodeInput] = useState('')
+  const [barcodeResult, setBarcodeResult] = useState<unknown>(null)
+  const [barcodeLoading, setBarcodeLoading] = useState(false)
 
   const filtered = useMemo(() => {
     let result = foods
@@ -185,7 +188,24 @@ export default function FoodsPage() {
     setView('list')
   }
 
-  const foodBreadcrumbLabel = editingFood ? `Edit: ${editingFood.name}` : 'New Food'
+  const breadcrumbLabel = view === 'barcode-debug'
+    ? 'Barcode Lookup'
+    : editingFood ? `Edit: ${editingFood.name}` : 'New Food'
+
+  async function lookupBarcode() {
+    if (!barcodeInput.trim()) return
+    setBarcodeLoading(true)
+    setBarcodeResult(null)
+    try {
+      const res = await fetch(`/api/foods/barcode/debug?code=${encodeURIComponent(barcodeInput.trim())}`)
+      const data = await res.json()
+      setBarcodeResult(data)
+    } catch (e) {
+      setBarcodeResult({ error: e instanceof Error ? e.message : 'Request failed' })
+    } finally {
+      setBarcodeLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -210,7 +230,7 @@ export default function FoodsPage() {
               Food Library
             </button>
             <ChevronRight className="h-3.5 w-3.5 text-[#64748b]" />
-            <span className="text-[#f8fafc]">{foodBreadcrumbLabel}</span>
+            <span className="text-[#f8fafc]">{breadcrumbLabel}</span>
           </>
         )}
       </nav>
@@ -242,6 +262,14 @@ export default function FoodsPage() {
                 </button>
               ))}
             </div>
+            <Button
+              variant="outline"
+              onClick={() => setView('barcode-debug')}
+              className="border-[#1e293b] text-[#94a3b8] hover:text-[#f8fafc]"
+            >
+              <ScanBarcode className="mr-1 h-4 w-4" />
+              Barcode Lookup
+            </Button>
             <Button onClick={openCreateFood} className="bg-[#3b82f6] text-white hover:bg-[#2563eb]">
               <Plus className="mr-1 h-4 w-4" />
               New Food
@@ -424,6 +452,41 @@ export default function FoodsPage() {
           onSaved={handleFoodSaved}
           onBack={() => setView('list')}
         />
+      )}
+
+      {view === 'barcode-debug' && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Input
+              placeholder="Enter barcode (e.g. 1620057978)"
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && lookupBarcode()}
+              className="max-w-sm border-[#1e293b] bg-[#0f172a] text-[#f8fafc] placeholder:text-[#64748b]"
+            />
+            <Button
+              onClick={lookupBarcode}
+              disabled={!barcodeInput.trim() || barcodeLoading}
+              className="bg-[#3b82f6] text-white hover:bg-[#2563eb]"
+            >
+              {barcodeLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                'Look Up'
+              )}
+            </Button>
+          </div>
+
+          {barcodeResult != null && (
+            <Card className="border-[#1e293b] bg-[#0f172a]">
+              <CardContent className="p-4">
+                <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
+                  {JSON.stringify(barcodeResult, null, 2)}
+                </pre>
+              </CardContent>
+            </Card>
+          )}
+        </section>
       )}
     </div>
   )
