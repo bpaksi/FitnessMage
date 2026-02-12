@@ -1,27 +1,26 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { ArrowRightLeft, Star, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, SlidersHorizontal, Star, Trash2 } from 'lucide-react'
 import type { DailyLogEntry } from '@/lib/types/log'
 
 interface FoodLogItemProps {
   entry: DailyLogEntry
   isFavorite: boolean
   onEditEntry: (entry: DailyLogEntry) => void
-  onEditFood: (entry: DailyLogEntry) => void
   onToggleFavorite: (entry: DailyLogEntry) => void
   onMove: (entry: DailyLogEntry) => void
   onDelete: (entry: DailyLogEntry) => void
 }
 
-const ACTION_ZONE_WIDTH = 144
-const SNAP_THRESHOLD_PX = 72
+const ACTION_ZONE_WIDTH = 224
+const SNAP_THRESHOLD_PX = 112
 
 function vibrate() {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50)
 }
 
-export function FoodLogItem({ entry, isFavorite, onEditEntry, onEditFood, onToggleFavorite, onMove, onDelete }: FoodLogItemProps) {
+export function FoodLogItem({ entry, isFavorite, onEditEntry, onToggleFavorite, onMove, onDelete }: FoodLogItemProps) {
   const [expanded, setExpanded] = useState(false)
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
@@ -110,6 +109,20 @@ export function FoodLogItem({ entry, isFavorite, onEditEntry, onEditFood, onTogg
     }
   }, [swiping])
 
+  const handleQtyClick = useCallback(() => {
+    vibrate()
+    setSettled(false)
+    setOffsetX(0)
+    onEditEntry(entry)
+  }, [entry, onEditEntry])
+
+  const handleFavoriteClick = useCallback(() => {
+    vibrate()
+    setSettled(false)
+    setOffsetX(0)
+    onToggleFavorite(entry)
+  }, [entry, onToggleFavorite])
+
   const handleMoveClick = useCallback(() => {
     vibrate()
     setSettled(false)
@@ -140,20 +153,34 @@ export function FoodLogItem({ entry, isFavorite, onEditEntry, onEditFood, onTogg
       className="relative overflow-hidden border-b border-[#1e293b] last:border-b-0"
     >
       {/* Action zones behind */}
-      <div className="absolute inset-y-0 right-0 flex w-[144px]">
+      <div className="absolute inset-y-0 right-0 flex w-[224px]">
+        <button
+          onClick={handleQtyClick}
+          className="flex h-full w-[56px] items-center justify-center bg-[#6366f1]"
+          aria-label="Edit quantity"
+        >
+          <SlidersHorizontal size={18} className="text-white" />
+        </button>
+        <button
+          onClick={handleFavoriteClick}
+          className="flex h-full w-[56px] items-center justify-center bg-[#eab308]"
+          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Star size={18} className={isFavorite ? 'fill-white text-white' : 'text-white'} />
+        </button>
         <button
           onClick={handleMoveClick}
-          className="flex h-full w-[72px] items-center justify-center bg-[#3b82f6]"
+          className="flex h-full w-[56px] items-center justify-center bg-[#3b82f6]"
           aria-label="Move to another meal"
         >
-          <ArrowRightLeft size={20} className="text-white" />
+          <ArrowRightLeft size={18} className="text-white" />
         </button>
         <button
           onClick={handleDeleteClick}
-          className="flex h-full w-[72px] items-center justify-center bg-red-600"
+          className="flex h-full w-[56px] items-center justify-center bg-red-600"
           aria-label="Delete entry"
         >
-          <Trash2 size={20} className="text-white" />
+          <Trash2 size={18} className="text-white" />
         </button>
       </div>
 
@@ -190,7 +217,7 @@ export function FoodLogItem({ entry, isFavorite, onEditEntry, onEditFood, onTogg
         </button>
 
         {expanded && (
-          <div className="animate-fade-in space-y-3 px-3 pb-3">
+          <div className="animate-fade-in px-3 pb-3">
             {/* Macro breakdown */}
             <div className="grid grid-cols-4 gap-2 rounded-lg bg-[#0f172a] p-2.5">
               <div className="text-center">
@@ -209,34 +236,6 @@ export function FoodLogItem({ entry, isFavorite, onEditEntry, onEditFood, onTogg
                 <p className="text-[10px] text-[#64748b]">Fat</p>
                 <p className="text-xs font-medium text-[#eab308]">{Number(entry.fat).toFixed(1)}g</p>
               </div>
-            </div>
-
-            {/* Actions — no delete here, it's swipe-accessible */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onEditEntry(entry)}
-                className="rounded-md bg-[#0f172a] px-3 py-1.5 text-xs text-[#94a3b8] transition-colors hover:bg-[#1e293b]"
-              >
-                Edit qty
-              </button>
-              <button
-                onClick={() => onEditFood(entry)}
-                className="rounded-md bg-[#0f172a] px-3 py-1.5 text-xs text-[#94a3b8] transition-colors hover:bg-[#1e293b]"
-              >
-                Edit food
-              </button>
-              {entry.food_id && (
-                <button
-                  onClick={() => {
-                    vibrate()
-                    onToggleFavorite(entry)
-                  }}
-                  className="ml-auto rounded-md bg-[#0f172a] p-1.5 transition-colors hover:bg-[#1e293b]"
-                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                >
-                  <Star size={16} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-[#64748b]'} />
-                </button>
-              )}
             </div>
           </div>
         )}

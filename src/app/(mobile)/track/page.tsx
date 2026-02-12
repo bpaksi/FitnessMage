@@ -13,7 +13,6 @@ import { DatePicker } from '@/components/mobile/date-picker'
 import { MealGroup } from '@/components/mobile/track/meal-group'
 import { FoodLogItem } from '@/components/mobile/track/food-log-item'
 import { EditEntrySheet } from '@/components/mobile/track/edit-entry-sheet'
-import { EditFoodSheet } from '@/components/mobile/track/edit-food-sheet'
 import { MoveMealSheet } from '@/components/mobile/track/move-meal-sheet'
 import { CopyMealSheet } from '@/components/mobile/track/copy-meal-sheet'
 import {
@@ -41,7 +40,6 @@ export default function TrackPage() {
   const { favorites, toggleFavorite } = useFavorites()
 
   const [editingEntry, setEditingEntry] = useState<DailyLogEntry | null>(null)
-  const [editingFood, setEditingFood] = useState<DailyLogEntry | null>(null)
   const [deletingEntry, setDeletingEntry] = useState<DailyLogEntry | null>(null)
   const [movingEntry, setMovingEntry] = useState<DailyLogEntry | null>(null)
   const [copyOpen, setCopyOpen] = useState(false)
@@ -243,7 +241,6 @@ export default function TrackPage() {
                     entry={entry}
                     isFavorite={entry.food_id ? favorites.some((f) => f.id === entry.food_id) : false}
                     onEditEntry={setEditingEntry}
-                    onEditFood={setEditingFood}
                     onToggleFavorite={(e) => e.food_id && toggleFavorite(e.food_id, favorites.some((f) => f.id === e.food_id))}
                     onMove={setMovingEntry}
                     onDelete={setDeletingEntry}
@@ -261,16 +258,6 @@ export default function TrackPage() {
         open={!!editingEntry}
         onClose={() => setEditingEntry(null)}
         onSave={handleEditSave}
-      />
-
-      <EditFoodSheet
-        entry={editingFood}
-        open={!!editingFood}
-        onClose={() => setEditingFood(null)}
-        onSaved={() => {
-          mutateLog()
-          mutateSummary()
-        }}
       />
 
       <MoveMealSheet
