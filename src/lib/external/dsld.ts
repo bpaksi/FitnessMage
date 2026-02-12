@@ -82,43 +82,66 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10
 }
 
+const STOP_WORDS = new Set(['a', 'an', 'the', 'and', 'of', 'with', 'for'])
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export interface DSLDMatchResult {
+  match: DSLDSearchResult | null
+  exact: boolean
+}
+
 /**
- * Pick the best DSLD result, trusting the API relevance score but
- * filtering out results with clear demographic mismatches.
- * Results are already sorted by API score (best first).
+ * Pick the best DSLD result by token-matching against the OFF product name.
+ * Results are already sorted by API relevance score (best first).
+ *
+ * Pass 1 (exact): OFF name is contained in DSLD fullName or vice versa.
+ * Pass 2 (approximate): word-boundary token scoring, highest count wins.
+ *
+ * Returns `{ match, exact }` so callers can prompt the user when
+ * only an approximate match was found.
  */
 export function pickBestDSLDMatch(
   results: DSLDSearchResult[],
   offProductName: string,
-): DSLDSearchResult | null {
-  if (results.length === 0) return null
+): DSLDMatchResult {
+  if (results.length === 0) return { match: null, exact: false }
 
-  const off = offProductName.toLowerCase()
+  const offTokens = offProductName
+    .toLowerCase()
+    .split(/[\s\-+,./]+/)
+    .filter((t) => t.length > 0 && !STOP_WORDS.has(t))
 
+  if (offTokens.length === 0) return { match: results[0], exact: false }
+
+  const offLower = offProductName.toLowerCase().trim()
+
+  // Pass 1: exact — OFF name appears in DSLD fullName or vice versa
   for (const r of results) {
-    const dsld = r.fullName.toLowerCase()
-
-    // Gender mismatch: OFF says "men" but DSLD says "women" (or vice versa)
-    const offMen = /\bmen\b/.test(off) && !/\bwomen\b/.test(off)
-    const offWomen = /\bwomen\b/.test(off)
-    const dsldMen = /\bmen\b/.test(dsld) && !/\bwomen\b/.test(dsld)
-    const dsldWomen = /\bwomen\b/.test(dsld)
-    if ((offMen && dsldWomen) || (offWomen && dsldMen)) continue
-
-    // Age group mismatch: OFF says "50+" but DSLD says "kids" (or vice versa)
-    const offAdult = /\b(50|adult|senior)\b/.test(off)
-    const dsldKids = /\b(kids?|child|children|teens?)\b/.test(dsld)
-    if (offAdult && dsldKids) continue
-
-    const offKids = /\b(kids?|child|children|teens?)\b/.test(off)
-    const dsldAdult = /\b(50|adult|senior)\b/.test(dsld)
-    if (offKids && dsldAdult) continue
-
-    return r
+    const full = r.fullName.toLowerCase()
+    if (full.includes(offLower) || offLower.includes(full)) {
+      return { match: r, exact: true }
+    }
   }
 
-  // All results filtered out — return first as fallback
-  return results[0]
+  // Pass 2: approximate — word-boundary token matching, pick highest score
+  const tokenPatterns = offTokens.map((t) => new RegExp(`\\b${escapeRegex(t)}`))
+
+  let bestResult = results[0]
+  let bestCount = 0
+
+  for (const r of results) {
+    const combined = `${r.fullName} ${r.brandName}`.toLowerCase()
+    const matchCount = tokenPatterns.filter((p) => p.test(combined)).length
+    if (matchCount > bestCount) {
+      bestCount = matchCount
+      bestResult = r
+    }
+  }
+
+  return { match: bestResult, exact: false }
 }
 
 export async function searchDSLD(
@@ -129,7 +152,7 @@ export async function searchDSLD(
     const url = new URL(`${BASE_URL}/search-filter`)
     url.searchParams.set('q', productName)
     if (brand) url.searchParams.set('brand', brand)
-    url.searchParams.set('size', '5')
+    url.searchParams.set('size', '15')
     url.searchParams.set('status', '1')
 
     const res = await fetch(url.toString(), {

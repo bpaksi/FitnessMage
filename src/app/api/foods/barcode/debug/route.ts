@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         const brand = offProduct.brands as string | undefined
         const results = await searchDSLD(productName, brand)
         dsldSearchResults = results
-        const bestMatch = pickBestDSLDMatch(results, productName)
+        const { match: bestMatch } = pickBestDSLDMatch(results, productName)
         if (bestMatch) {
           const label = await fetchDSLDLabel(bestMatch.id)
           dsldSelectedLabel = label

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, BookOpen, Star, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill, ScanBarcode } from 'lucide-react'
+import { Plus, BookOpen, Star, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,10 +18,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { FoodEditor } from '@/components/web/food-editor'
-import { FoodDetailCard } from '@/components/mobile/add/food-detail-card'
 import type { Food } from '@/lib/types/food'
 
-type View = 'list' | 'food-editor' | 'barcode-debug'
+type View = 'list' | 'food-editor'
 type SortColumn = 'name' | 'calories' | 'protein' | 'carbs' | 'fat' | 'created_at'
 type SortDirection = 'asc' | 'desc'
 
@@ -57,10 +56,6 @@ export default function FoodsPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [page, setPage] = useState(1)
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'food' | 'supplement'>('all')
-  const [barcodeInput, setBarcodeInput] = useState('')
-  const [barcodeResult, setBarcodeResult] = useState<unknown>(null)
-  const [barcodeMainResult, setBarcodeMainResult] = useState<unknown>(null)
-  const [barcodeLoading, setBarcodeLoading] = useState(false)
 
   const filtered = useMemo(() => {
     let result = foods
@@ -190,30 +185,8 @@ export default function FoodsPage() {
     setView('list')
   }
 
-  const breadcrumbLabel = view === 'barcode-debug'
-    ? 'Barcode Lookup'
-    : editingFood ? `Edit: ${editingFood.name}` : 'New Food'
+  const breadcrumbLabel = editingFood ? `Edit: ${editingFood.name}` : 'New Food'
 
-  async function lookupBarcode() {
-    if (!barcodeInput.trim()) return
-    setBarcodeLoading(true)
-    setBarcodeResult(null)
-    setBarcodeMainResult(null)
-    const code = encodeURIComponent(barcodeInput.trim())
-    try {
-      const [debugRes, mainRes] = await Promise.all([
-        fetch(`/api/foods/barcode/debug?code=${code}`),
-        fetch(`/api/foods/barcode?code=${code}`),
-      ])
-      const [debugData, mainData] = await Promise.all([debugRes.json(), mainRes.json()])
-      setBarcodeResult(debugData)
-      setBarcodeMainResult(mainData)
-    } catch (e) {
-      setBarcodeResult({ error: e instanceof Error ? e.message : 'Request failed' })
-    } finally {
-      setBarcodeLoading(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -270,14 +243,6 @@ export default function FoodsPage() {
                 </button>
               ))}
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setView('barcode-debug')}
-              className="border-[#1e293b] text-[#94a3b8] hover:text-[#f8fafc]"
-            >
-              <ScanBarcode className="mr-1 h-4 w-4" />
-              Barcode Lookup
-            </Button>
             <Button onClick={openCreateFood} className="bg-[#3b82f6] text-white hover:bg-[#2563eb]">
               <Plus className="mr-1 h-4 w-4" />
               New Food
@@ -464,170 +429,6 @@ export default function FoodsPage() {
         />
       )}
 
-      {view === 'barcode-debug' && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Input
-              placeholder="Enter barcode (e.g. 1620057978)"
-              value={barcodeInput}
-              onChange={(e) => setBarcodeInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && lookupBarcode()}
-              className="max-w-sm border-[#1e293b] bg-[#0f172a] text-[#f8fafc] placeholder:text-[#64748b]"
-            />
-            <Button
-              onClick={lookupBarcode}
-              disabled={!barcodeInput.trim() || barcodeLoading}
-              className="bg-[#3b82f6] text-white hover:bg-[#2563eb]"
-            >
-              {barcodeLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              ) : (
-                'Look Up'
-              )}
-            </Button>
-          </div>
-
-          {/* Visual preview — same component the phone renders */}
-          {barcodeMainResult != null && !('error' in (barcodeMainResult as Record<string, unknown>)) && (
-            <div className="max-w-sm">
-              <FoodDetailCard
-                food={barcodeMainResult as Food}
-                onAdd={() => {}}
-                onCancel={() => {
-                  setBarcodeMainResult(null)
-                  setBarcodeResult(null)
-                }}
-              />
-            </div>
-          )}
-
-          {/* Flow — step-by-step in the same order as the barcode route */}
-          {barcodeResult != null && (() => {
-            const d = barcodeResult as Record<string, unknown>
-            const localDb = d.localDb as Record<string, unknown> | undefined
-            const off = d.openFoodFacts as Record<string, unknown> | undefined
-            const dsld = d.dsld as Record<string, unknown> | undefined
-            const usda = d.usda as Record<string, unknown> | undefined
-            const processed = d.processed as Record<string, unknown> | undefined
-            const isSupplement = d.supplement === true
-            const offProduct = off?.product as Record<string, unknown> | null | undefined
-
-            const steps: { label: string; status: 'pass' | 'fail' | 'skip' | 'info'; detail?: string }[] = []
-
-            // 1. Local DB
-            if (localDb?.hasData) {
-              steps.push({ label: 'Local DB', status: 'pass', detail: 'Cached food with data found' })
-            } else if (localDb?.result) {
-              steps.push({ label: 'Local DB', status: 'fail', detail: 'Cached row exists but empty data' })
-            } else {
-              steps.push({ label: 'Local DB', status: 'fail', detail: 'No cached food' })
-            }
-
-            // 2. OpenFoodFacts
-            if (off?.productFound) {
-              steps.push({ label: 'OpenFoodFacts', status: 'pass', detail: `${offProduct?.product_name ?? 'Unknown'} — ${offProduct?.brands ?? 'No brand'}` })
-            } else {
-              steps.push({ label: 'OpenFoodFacts', status: 'fail', detail: `HTTP ${off?.httpStatus ?? '?'} — product not found` })
-            }
-
-            // 3. Supplement detection
-            if (isSupplement) {
-              steps.push({ label: 'Supplement detected', status: 'info', detail: `Categories: ${(offProduct?.categories as string) || '—'}` })
-            }
-
-            // 4. DSLD (only for supplements)
-            if (isSupplement) {
-              const dsldResults = dsld?.searchResults
-              const dsldLabel = dsld?.selectedLabel
-              const dsldTransformed = dsld?.transformed
-              if (dsldTransformed) {
-                const t = dsldTransformed as Record<string, unknown>
-                steps.push({ label: 'DSLD', status: 'pass', detail: `Matched: ${t.name} — ${t.serving_size}` })
-              } else if (Array.isArray(dsldResults) && dsldResults.length > 0 && !dsldLabel) {
-                steps.push({ label: 'DSLD', status: 'fail', detail: `${dsldResults.length} search hit(s) but label fetch failed` })
-              } else if (Array.isArray(dsldResults) && dsldResults.length === 0) {
-                steps.push({ label: 'DSLD', status: 'fail', detail: 'No search results' })
-              } else {
-                steps.push({ label: 'DSLD', status: 'fail', detail: 'No results' })
-              }
-            } else {
-              steps.push({ label: 'DSLD', status: 'skip', detail: 'Skipped — not a supplement' })
-            }
-
-            // 5. USDA
-            if (usda?.transformed) {
-              const t = usda.transformed as Record<string, unknown>
-              steps.push({ label: 'USDA', status: 'pass', detail: `${t.name}` })
-            } else if (!usda?.apiKeyConfigured) {
-              steps.push({ label: 'USDA', status: 'skip', detail: 'No API key configured' })
-            } else if (dsld?.transformed) {
-              steps.push({ label: 'USDA', status: 'skip', detail: 'Skipped — DSLD provided data' })
-            } else {
-              steps.push({ label: 'USDA', status: 'fail', detail: 'No matching food found' })
-            }
-
-            // 6. Result
-            const action = processed?.action as string | undefined
-            const sourceMap: Record<string, string> = {
-              returned_cached: 'Local DB (cached)',
-              would_return_dsld: 'DSLD',
-              would_return_usda: 'USDA',
-              would_return_off: 'OpenFoodFacts',
-              not_found: 'Not found',
-            }
-            steps.push({ label: `Result: ${sourceMap[action ?? ''] ?? action ?? '?'}`, status: action === 'not_found' ? 'fail' : 'pass' })
-
-            const statusColors = {
-              pass: 'bg-green-500',
-              fail: 'bg-red-500',
-              skip: 'bg-[#64748b]',
-              info: 'bg-[#a78bfa]',
-            }
-
-            return (
-              <Card className="border-[#1e293b] bg-[#0f172a]">
-                <CardContent className="p-4">
-                  <p className="mb-3 text-xs font-medium uppercase tracking-wider text-[#f8fafc]">Lookup Flow</p>
-                  <div className="space-y-2">
-                    {steps.map((step, i) => (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${statusColors[step.status]}`} />
-                        <div className="min-w-0">
-                          <span className="text-sm font-medium text-[#f8fafc]">{step.label}</span>
-                          {step.detail && <p className="text-xs text-[#64748b]">{step.detail}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })()}
-
-          {/* Raw JSON dumps for debugging */}
-          {barcodeMainResult != null && (
-            <Card className="border-[#1e293b] bg-[#0f172a]">
-              <CardContent className="p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#64748b]">Scan Result JSON</p>
-                <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
-                  {JSON.stringify(barcodeMainResult, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
-
-          {barcodeResult != null && (
-            <Card className="border-[#1e293b] bg-[#0f172a]">
-              <CardContent className="p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#64748b]">Debug JSON (all sources)</p>
-                <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
-                  {JSON.stringify(barcodeResult, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Pill, Search } from 'lucide-react'
+import { ChevronDown, Pill, Search, ScanBarcode } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -84,6 +84,149 @@ function SearchSection({ onFoodSelected }: {
               </div>
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- Barcode Tab ---
+
+interface DSLDCandidate {
+  id: string
+  score: number
+  fullName: string
+  brandName: string
+}
+
+function BarcodeSection({ onFoodSelected }: {
+  onFoodSelected: (food: Food) => void
+}) {
+  const [barcode, setBarcode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [candidates, setCandidates] = useState<DSLDCandidate[] | null>(null)
+  const [candidateMeta, setCandidateMeta] = useState<{ barcode: string; off_name: string | null; off_brand: string | null } | null>(null)
+  const [selectingId, setSelectingId] = useState<string | null>(null)
+
+  async function lookupBarcode() {
+    if (!barcode.trim()) return
+    setLoading(true)
+    setError('')
+    setCandidates(null)
+    setCandidateMeta(null)
+
+    try {
+      const res = await fetch(`/api/foods/barcode?code=${encodeURIComponent(barcode.trim())}`)
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Product not found')
+        return
+      }
+
+      if (data.needs_dsld_selection) {
+        setCandidates(data.dsld_candidates)
+        setCandidateMeta({ barcode: data.barcode, off_name: data.off_name, off_brand: data.off_brand })
+      } else {
+        onFoodSelected(data as Food)
+      }
+    } catch {
+      setError('Request failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function selectCandidate(dsldId: string) {
+    if (!candidateMeta) return
+    setSelectingId(dsldId)
+
+    try {
+      const res = await fetch(
+        `/api/foods/barcode?code=${encodeURIComponent(candidateMeta.barcode)}&dsld_id=${encodeURIComponent(dsldId)}`,
+      )
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to load supplement data')
+        return
+      }
+
+      onFoodSelected(data as Food)
+    } catch {
+      setError('Request failed')
+    } finally {
+      setSelectingId(null)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <ScanBarcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748b]" />
+          <Input
+            placeholder="Enter barcode (e.g. 016500579786)"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && lookupBarcode()}
+            className="border-[#1e293b] bg-[#020817] pl-9 text-[#f8fafc] placeholder:text-[#64748b]"
+            autoFocus
+          />
+        </div>
+        <Button
+          onClick={lookupBarcode}
+          disabled={!barcode.trim() || loading}
+          className="bg-[#3b82f6] text-white hover:bg-[#2563eb]"
+        >
+          {loading ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          ) : (
+            'Look Up'
+          )}
+        </Button>
+      </div>
+
+      {!candidates && !error && (
+        <p className="py-8 text-center text-sm text-[#64748b]">
+          Look up a product by its barcode number
+        </p>
+      )}
+
+      {error && (
+        <div className="py-8 text-center">
+          <p className="text-sm text-red-400">{error}</p>
+          <p className="mt-1 text-xs text-[#64748b]">Try a different barcode or enter the food manually</p>
+        </div>
+      )}
+
+      {candidates && candidateMeta && (
+        <div className="space-y-2">
+          <p className="text-sm text-[#f8fafc]">
+            Multiple supplement matches for <span className="font-medium">{candidateMeta.off_name}</span>
+          </p>
+          <p className="text-xs text-[#64748b]">Select the correct product, or cancel to enter manually</p>
+
+          <div className="space-y-1.5">
+            {candidates.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => selectCandidate(c.id)}
+                disabled={selectingId !== null}
+                className="w-full rounded-md border border-[#1e293b] p-3 text-left transition-colors hover:bg-[#020817] disabled:opacity-50"
+              >
+                <p className="text-sm font-medium text-[#f8fafc]">{c.fullName}</p>
+                <p className="text-xs text-[#64748b]">{c.brandName}</p>
+                {selectingId === c.id && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <div className="h-3 w-3 animate-spin rounded-full border border-[#3b82f6] border-t-transparent" />
+                    <span className="text-xs text-[#64748b]">Loading...</span>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -792,9 +935,12 @@ export function FoodEditor({ food, onSaved }: FoodEditorProps) {
   return (
     <div className="max-w-lg">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 bg-[#0f172a]">
+        <TabsList className="grid w-full grid-cols-3 bg-[#0f172a]">
           <TabsTrigger value="search" className="data-[state=active]:bg-[#1e293b] data-[state=active]:text-[#f8fafc]">
             Search
+          </TabsTrigger>
+          <TabsTrigger value="barcode" className="data-[state=active]:bg-[#1e293b] data-[state=active]:text-[#f8fafc]">
+            Barcode
           </TabsTrigger>
           <TabsTrigger value="manual" className="data-[state=active]:bg-[#1e293b] data-[state=active]:text-[#f8fafc]">
             Manual
@@ -802,6 +948,9 @@ export function FoodEditor({ food, onSaved }: FoodEditorProps) {
         </TabsList>
         <TabsContent value="search" className="mt-4">
           <SearchSection onFoodSelected={handleFoodSelected} />
+        </TabsContent>
+        <TabsContent value="barcode" className="mt-4">
+          <BarcodeSection onFoodSelected={handleFoodSelected} />
         </TabsContent>
         <TabsContent value="manual" className="mt-4">
           <ManualForm key={prefillFood?.id || 'new'} prefill={prefillFood} onSaved={onSaved} />

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import { Pill } from 'lucide-react'
 import { apiClient } from '@/lib/mobile/api-client'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,25 @@ const QrScanner = dynamic(
   { ssr: false, loading: () => <div className="flex items-center justify-center bg-black text-sm text-[#64748b]" style={{ height: '60svh' }}>Starting camera...</div> },
 )
 
+interface DSLDCandidate {
+  id: string
+  score: number
+  fullName: string
+  brandName: string
+}
+
+interface DSLDSelectionResponse {
+  needs_dsld_selection: true
+  barcode: string
+  off_name: string | null
+  off_brand: string | null
+  dsld_candidates: DSLDCandidate[]
+}
+
+function isDSLDSelection(data: unknown): data is DSLDSelectionResponse {
+  return typeof data === 'object' && data !== null && 'needs_dsld_selection' in data
+}
+
 interface ScanTabProps {
   onAddFood: (food: Food, servings?: number) => void
   onManualEntry: (barcode?: string) => void
@@ -33,6 +53,8 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
   const [cameraError, setCameraError] = useState('')
   const [manualBarcode, setManualBarcode] = useState('')
   const [lastScannedCode, setLastScannedCode] = useState('')
+  const [dsldSelection, setDsldSelection] = useState<DSLDSelectionResponse | null>(null)
+  const [selectingId, setSelectingId] = useState<string | null>(null)
 
   async function lookupBarcode(code: string) {
     if (code === lastScannedCode) return
@@ -40,14 +62,37 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
     setLoading(true)
     setError('')
     setScannedFood(null)
+    setDsldSelection(null)
 
     try {
-      const food = await apiClient<Food>(`/api/foods/barcode?code=${encodeURIComponent(code)}`)
-      setScannedFood(food)
+      const data = await apiClient<Food | DSLDSelectionResponse>(`/api/foods/barcode?code=${encodeURIComponent(code)}`)
+      if (isDSLDSelection(data)) {
+        setDsldSelection(data)
+      } else {
+        setScannedFood(data)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Product not found')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function selectCandidate(dsldId: string) {
+    if (!dsldSelection) return
+    setSelectingId(dsldId)
+
+    try {
+      const food = await apiClient<Food>(
+        `/api/foods/barcode?code=${encodeURIComponent(dsldSelection.barcode)}&dsld_id=${encodeURIComponent(dsldId)}`,
+      )
+      setScannedFood(food)
+      setDsldSelection(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load supplement data')
+      setDsldSelection(null)
+    } finally {
+      setSelectingId(null)
     }
   }
 
@@ -61,6 +106,59 @@ export function ScanTab({ onAddFood, onManualEntry, onCancel }: ScanTabProps) {
           setLastScannedCode('')
         }}
       />
+    )
+  }
+
+  if (dsldSelection) {
+    return (
+      <div className="rounded-lg border border-[#1e293b] bg-[#0f172a] p-4">
+        <div className="flex items-center gap-2">
+          <Pill size={16} className="shrink-0 text-[#a78bfa]" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-[#f8fafc]">Select supplement</p>
+            <p className="text-xs text-[#64748b]">{dsldSelection.off_name}</p>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-1.5">
+          {dsldSelection.dsld_candidates.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => selectCandidate(c.id)}
+              disabled={selectingId !== null}
+              className="w-full rounded-md border border-[#1e293b] p-3 text-left transition-colors active:bg-[#1e293b] disabled:opacity-50"
+            >
+              <p className="text-sm text-[#f8fafc]">{c.fullName}</p>
+              <p className="text-xs text-[#64748b]">{c.brandName}</p>
+              {selectingId === c.id && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <div className="h-3 w-3 animate-spin rounded-full border border-[#3b82f6] border-t-transparent" />
+                  <span className="text-xs text-[#64748b]">Loading...</span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDsldSelection(null)
+              setLastScannedCode('')
+            }}
+            className="flex-1 border-[#1e293b] text-[#94a3b8]"
+          >
+            Scan again
+          </Button>
+          <Button
+            onClick={() => onManualEntry(dsldSelection.barcode)}
+            className="flex-1 bg-[#3b82f6] text-white hover:bg-[#2563eb]"
+          >
+            Enter manually
+          </Button>
+        </div>
+      </div>
     )
   }
 

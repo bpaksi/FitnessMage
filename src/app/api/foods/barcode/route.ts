@@ -149,21 +149,52 @@ export async function GET(request: Request) {
 
     // Try DSLD for supplements (accurate label data)
     let dsldFood: ReturnType<typeof transformDSLDFood> | null = null
+    let dsldCandidates: Awaited<ReturnType<typeof searchDSLD>> | null = null
+    let dsldExact = false
+    const forcedDsldId = searchParams.get('dsld_id')
+
     if (supplement && offProduct) {
       try {
         const productName = offProduct.product_name as string
         const brand = offProduct.brands as string | undefined
-        const results = await searchDSLD(productName, brand)
-        const bestMatch = pickBestDSLDMatch(results, productName)
-        if (bestMatch) {
-          const label = await fetchDSLDLabel(bestMatch.id)
+
+        if (forcedDsldId) {
+          // User selected a specific DSLD candidate
+          const label = await fetchDSLDLabel(forcedDsldId)
           if (label) {
             dsldFood = transformDSLDFood(label)
+            dsldExact = true
+          }
+        } else {
+          const results = await searchDSLD(productName, brand)
+          const { match, exact } = pickBestDSLDMatch(results, productName)
+          dsldExact = exact
+          if (match) {
+            if (exact) {
+              const label = await fetchDSLDLabel(match.id)
+              if (label) dsldFood = transformDSLDFood(label)
+            } else {
+              // No exact match — return candidates for user selection
+              dsldCandidates = results
+            }
           }
         }
       } catch {
         // DSLD lookup failed — fall through to USDA
       }
+    }
+
+    // If we have candidates but no exact match, return them for user selection
+    if (dsldCandidates && !dsldExact && !forcedDsldId) {
+      const now = new Date().toISOString()
+      return ok({
+        needs_dsld_selection: true,
+        barcode: code,
+        off_name: (offProduct?.product_name as string) || null,
+        off_brand: (offProduct?.brands as string) || null,
+        dsld_candidates: dsldCandidates,
+        id: '', created_at: now, updated_at: now,
+      })
     }
 
     // Fall back to USDA when OFF has no nutritional data and DSLD didn't match
