@@ -269,6 +269,7 @@ export default function AddPage() {
 
           <TabsContent value="search" className="mt-3">
             <SearchTab
+              active={activeTab === 'search'}
               onSelectFood={(food) => setQuantityFood(food)}
               onQuickAddFood={(food) => addFoodToLog(food)}
             />

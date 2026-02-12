@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useFoodSearch } from '@/hooks/use-food-search'
 import { useFavorites } from '@/hooks/use-favorites'
 import { FoodListItem } from './food-list-item'
@@ -8,12 +8,21 @@ import { Input } from '@/components/ui/input'
 import type { Food } from '@/lib/types/food'
 
 interface SearchTabProps {
+  active?: boolean
   onSelectFood: (food: Food) => void
   onQuickAddFood: (food: Food) => void
 }
 
-export function SearchTab({ onSelectFood, onQuickAddFood }: SearchTabProps) {
+export function SearchTab({ active, onSelectFood, onQuickAddFood }: SearchTabProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    if (active) {
+      // Small delay to ensure the tab content is visible before focusing
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+  }, [active])
   const { foods, isLoading } = useFoodSearch(query)
   const { favorites, toggleFavorite } = useFavorites()
   const favoriteIds = new Set(favorites.map((f) => f.id))
@@ -21,10 +30,10 @@ export function SearchTab({ onSelectFood, onQuickAddFood }: SearchTabProps) {
   return (
     <div className="space-y-3">
       <Input
+        ref={inputRef}
         placeholder="Search foods..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        autoFocus
         className="border-[#1e293b] bg-[#0f172a] text-[#f8fafc] placeholder:text-[#475569]"
       />
 
