@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import {
   parseServingSize,
   amountToServings,
@@ -64,21 +64,26 @@ interface AmountStepperProps {
   onServingsChange: (servings: number) => void
 }
 
+function formatNum(n: number): string {
+  return Number.isInteger(n) ? n.toString() : parseFloat(n.toFixed(2)).toString()
+}
+
 function AmountStepper({ baseQuantity, unit, servings, onServingsChange }: AmountStepperProps) {
   const step = getDefaultStep(baseQuantity)
   const amount = servingsToAmount(servings, baseQuantity)
   const [inputValue, setInputValue] = useState(formatNum(amount))
   const inputRef = useRef<HTMLInputElement>(null)
+  const [isFocused, setIsFocused] = useState(false)
+  const [prevServings, setPrevServings] = useState(servings)
+  const [prevBaseQuantity, setPrevBaseQuantity] = useState(baseQuantity)
 
-  // Sync input when servings change externally
-  useEffect(() => {
-    if (document.activeElement !== inputRef.current) {
+  // Sync input when servings change externally (adjust state during render)
+  if (prevServings !== servings || prevBaseQuantity !== baseQuantity) {
+    setPrevServings(servings)
+    setPrevBaseQuantity(baseQuantity)
+    if (!isFocused) {
       setInputValue(formatNum(servingsToAmount(servings, baseQuantity)))
     }
-  }, [servings, baseQuantity])
-
-  function formatNum(n: number): string {
-    return Number.isInteger(n) ? n.toString() : parseFloat(n.toFixed(2)).toString()
   }
 
   function commitValue(val: string) {
@@ -115,7 +120,8 @@ function AmountStepper({ baseQuantity, unit, servings, onServingsChange }: Amoun
           inputMode="decimal"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onBlur={(e) => commitValue(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={(e) => { setIsFocused(false); commitValue(e.target.value) }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.currentTarget.blur()
