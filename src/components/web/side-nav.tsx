@@ -19,11 +19,17 @@ const SETTINGS_SECTIONS = [
   { section: 'data', label: 'Data Management' },
 ] as const
 
+const REPORTS_SECTIONS = [
+  { section: 'overview', label: 'Overview' },
+  { section: 'nutrients', label: 'Nutrients' },
+] as const
+
 export function SideNav() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const onSettings = pathname.startsWith('/settings')
-  const activeSection = searchParams.get('section') ?? 'daily-goals'
+  const onReports = pathname.startsWith('/reports')
+  const activeSection = searchParams.get('section') ?? (onSettings ? 'daily-goals' : 'overview')
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-[#1e293b] bg-[#020817]">
@@ -49,6 +55,29 @@ export function SideNav() {
               <Link
                 key={section}
                 href={`/settings?section=${section}`}
+                className={`rounded-md px-3 py-2 text-sm font-medium ${
+                  activeSection === section
+                    ? 'bg-[#3b82f6]/10 text-[#3b82f6]'
+                    : 'text-[#94a3b8] hover:bg-[#0f172a]/50'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </>
+        ) : onReports ? (
+          <>
+            <Link
+              href="/foods"
+              className="mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-[#94a3b8] hover:bg-[#0f172a]/50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Link>
+            {REPORTS_SECTIONS.map(({ section, label }) => (
+              <Link
+                key={section}
+                href={`/reports?section=${section}`}
                 className={`rounded-md px-3 py-2 text-sm font-medium ${
                   activeSection === section
                     ? 'bg-[#3b82f6]/10 text-[#3b82f6]'
