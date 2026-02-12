@@ -6,9 +6,9 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { BarChart3, BookOpen, UtensilsCrossed, Smartphone, Settings, ArrowLeft } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/foods', label: 'Foods', icon: BookOpen },
   { href: '/meals', label: 'Meals', icon: UtensilsCrossed },
+  { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/devices', label: 'Devices', icon: Smartphone },
   { href: '/settings', label: 'Settings', icon: Settings },
 ] as const
@@ -35,7 +35,7 @@ export function SideNav() {
     <aside className="flex w-56 shrink-0 flex-col border-r border-[#1e293b] bg-[#020817]">
       {/* Logo */}
       <div className="px-5 py-5">
-        <Link href="/reports" className="text-lg font-light tracking-tight text-[#f8fafc]">
+        <Link href="/foods" className="text-lg font-light tracking-tight text-[#f8fafc]">
           Fitness<span className="font-medium text-[#3b82f6]"> Mage</span>
         </Link>
       </div>
@@ -45,7 +45,7 @@ export function SideNav() {
         {onSettings ? (
           <>
             <Link
-              href="/reports"
+              href="/foods"
               className="mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-[#94a3b8] hover:bg-[#0f172a]/50"
             >
               <ArrowLeft className="h-4 w-4" />
