@@ -1,7 +1,6 @@
 'use client'
 
 import { useRecentFoods } from '@/hooks/use-recent-foods'
-import { useFavorites } from '@/hooks/use-favorites'
 import { FoodListItem } from './food-list-item'
 import { Clock } from 'lucide-react'
 import { EmptyState } from '@/components/mobile/empty-state'
@@ -14,8 +13,6 @@ interface RecentTabProps {
 
 export function RecentTab({ onSelectFood, onQuickAddFood }: RecentTabProps) {
   const { foods, isLoading } = useRecentFoods()
-  const { favorites, toggleFavorite } = useFavorites()
-  const favoriteIds = new Set(favorites.map((f) => f.id))
 
   if (isLoading) {
     return (
@@ -37,10 +34,8 @@ export function RecentTab({ onSelectFood, onQuickAddFood }: RecentTabProps) {
         <FoodListItem
           key={food.id}
           food={food}
-          isFavorite={favoriteIds.has(food.id)}
           onSelect={onSelectFood}
           onQuickAdd={onQuickAddFood}
-          onToggleFavorite={toggleFavorite}
         />
       ))}
     </div>

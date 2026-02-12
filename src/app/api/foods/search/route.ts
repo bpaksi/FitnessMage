@@ -1,5 +1,4 @@
 import { resolveUser } from '@/lib/auth/resolve-user'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ok, unauthorized } from '@/lib/api/response'
 import { usdaSearchLimiter } from '@/lib/api/rate-limit'
 import { searchUSDA, transformUSDAFood } from '@/lib/external/usda'
@@ -12,7 +11,6 @@ export async function GET(request: Request) {
 
     if (!q || q.length < 2) return ok([])
 
-    const admin = createAdminClient()
     const apiKey = process.env.USDA_API_KEY
 
     // Check rate limit before firing USDA request
@@ -30,7 +28,7 @@ export async function GET(request: Request) {
         : Promise.resolve([]),
     ])
 
-    // Local results
+    // Local results (already persisted, have real ids)
     const localFoods =
       localResult.status === 'fulfilled' && !localResult.value.error
         ? localResult.value.data ?? []
@@ -39,9 +37,13 @@ export async function GET(request: Request) {
     const usdaRaw =
       usdaResult.status === 'fulfilled' ? usdaResult.value : []
 
-    // Transform and filter USDA results
+    // Transform USDA results into previews (no id — saved only when logged)
+    const now = new Date().toISOString()
     const usdaFoods = usdaRaw
-      .map((f) => transformUSDAFood(f))
+      .map((f) => {
+        const t = transformUSDAFood(f)
+        return t ? { ...t, id: '', created_at: now, updated_at: now } : null
+      })
       .filter((f): f is NonNullable<typeof f> => f !== null)
 
     if (usdaFoods.length === 0) return ok(localFoods.slice(0, 25))
@@ -58,74 +60,9 @@ export async function GET(request: Request) {
       (f) => !localKeys.has(`${f.name.toLowerCase()}|${(f.brand ?? '').toLowerCase()}`),
     )
 
-    if (uniqueUSDA.length === 0) return ok(localFoods.slice(0, 25))
-
-    // Cache new USDA foods in DB (best-effort, don't fail the request)
-    // Admin client for shared food inserts (user_id: null)
-    const withBarcode = uniqueUSDA.filter((f) => f.barcode)
-    const withoutBarcode = uniqueUSDA.filter((f) => !f.barcode)
-
-    let cachedUSDA: unknown[] = []
-    try {
-      const results: unknown[][] = []
-
-      if (withBarcode.length > 0) {
-        const { data } = await admin
-          .from('foods')
-          .upsert(withBarcode, { onConflict: 'barcode', ignoreDuplicates: true })
-          .select()
-        if (data) results.push(data)
-      }
-      if (withoutBarcode.length > 0) {
-        // Deduplicate: find which foods already exist by (name, brand, source)
-        const names = withoutBarcode.map((f) => f.name)
-        const { data: existing } = await admin
-          .from('foods')
-          .select('name, brand')
-          .eq('source', 'usda')
-          .is('user_id', null)
-          .in('name', names)
-
-        const existingKeys = new Set(
-          (existing ?? []).map(
-            (f: { name: string; brand: string | null }) =>
-              `${f.name.toLowerCase()}|${(f.brand ?? '').toLowerCase()}`,
-          ),
-        )
-
-        const toInsert = withoutBarcode.filter(
-          (f) => !existingKeys.has(`${f.name.toLowerCase()}|${(f.brand ?? '').toLowerCase()}`),
-        )
-
-        if (toInsert.length > 0) {
-          const { data } = await admin
-            .from('foods')
-            .insert(toInsert)
-            .select()
-          if (data) results.push(data)
-        }
-
-        // Also return already-cached foods so they appear in results
-        if (existing && existing.length > 0) {
-          const { data: cachedFoods } = await admin
-            .from('foods')
-            .select('*')
-            .eq('source', 'usda')
-            .is('user_id', null)
-            .in('name', existing.map((f: { name: string }) => f.name))
-          if (cachedFoods) results.push(cachedFoods)
-        }
-      }
-
-      cachedUSDA = results.flat()
-    } catch {
-      // Cache failure is non-fatal — return transformed data directly
-      cachedUSDA = uniqueUSDA
-    }
-
-    // Merge: local first, then USDA, capped at 25
+    // Merge: local first, then USDA previews, capped at 25
     const remaining = 25 - localFoods.length
-    const merged = [...localFoods, ...cachedUSDA.slice(0, Math.max(0, remaining))]
+    const merged = [...localFoods, ...uniqueUSDA.slice(0, Math.max(0, remaining))]
 
     return ok(merged)
   } catch {

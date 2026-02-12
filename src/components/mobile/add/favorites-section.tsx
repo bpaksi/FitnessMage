@@ -11,7 +11,7 @@ interface FavoritesSectionProps {
 }
 
 export function FavoritesSection({ onSelectFood, onQuickAddFood }: FavoritesSectionProps) {
-  const { favorites, isLoading, toggleFavorite } = useFavorites()
+  const { favorites, isLoading } = useFavorites()
 
   if (isLoading) {
     return (
@@ -41,7 +41,6 @@ export function FavoritesSection({ onSelectFood, onQuickAddFood }: FavoritesSect
           isFavorite={true}
           onSelect={onSelectFood}
           onQuickAdd={onQuickAddFood}
-          onToggleFavorite={toggleFavorite}
         />
       ))}
     </div>

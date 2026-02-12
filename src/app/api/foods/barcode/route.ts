@@ -189,34 +189,84 @@ export async function GET(request: Request) {
       return error('Product not found', 404)
     }
 
-    // Don't cache foods with no nutrition data — let user enter manually
+    // Don't return foods with no nutrition data — let user enter manually
     if (isFoodDataEmpty(foodData as Record<string, unknown>)) {
       return error('Product not found', 404)
     }
 
-    // Update previously cached empty row, or insert new
+    // Return preview without saving — food is persisted only when user logs it
+    const now = new Date().toISOString()
+    return ok({ ...foodData, id: '', created_at: now, updated_at: now })
+  } catch {
+    return unauthorized()
+  }
+}
+
+/** Persist an external food (barcode or search) when the user logs it */
+export async function POST(request: Request) {
+  try {
+    await resolveUser(request)
+    const body = await request.json()
+
+    if (!body.name) {
+      return error('Name is required', 400)
+    }
+
     const admin = createAdminClient()
 
-    if (existing) {
-      const { user_id: _, ...updateFields } = foodData
-      const { data: updated, error: updateError } = await admin
+    // Strip synthetic preview fields before saving
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, created_at: _ca, updated_at: _ua, ...foodFields } = body
+
+    // Dedup by barcode if present
+    if (body.barcode) {
+      const { data: existing } = await admin
         .from('foods')
-        .update(updateFields)
-        .eq('id', existing.id)
-        .select()
+        .select('*')
+        .eq('barcode', body.barcode)
         .single()
-      if (updateError) return error(updateError.message)
-      return ok(updated)
+
+      if (existing && !isFoodDataEmpty(existing)) {
+        return ok(existing)
+      }
+
+      if (existing) {
+        // Update the previously cached empty row
+        const { data: updated, error: updateError } = await admin
+          .from('foods')
+          .update(foodFields)
+          .eq('id', existing.id)
+          .select()
+          .single()
+        if (updateError) return error(updateError.message)
+        return ok(updated)
+      }
+    }
+
+    // Dedup by name+brand+source for non-barcode foods
+    if (!body.barcode && body.source && body.source !== 'manual') {
+      const query = admin
+        .from('foods')
+        .select('*')
+        .eq('name', body.name)
+        .eq('source', body.source)
+        .is('user_id', null)
+
+      if (body.brand) query.eq('brand', body.brand)
+      else query.is('brand', null)
+
+      const { data: existing } = await query.single()
+      if (existing) return ok(existing)
     }
 
     const { data: newFood, error: insertError } = await admin
       .from('foods')
-      .insert(foodData)
+      .insert(foodFields)
       .select()
       .single()
 
     if (insertError) return error(insertError.message)
-    return ok(newFood)
+    return ok(newFood, 201)
   } catch {
     return unauthorized()
   }

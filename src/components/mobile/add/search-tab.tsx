@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useFoodSearch } from '@/hooks/use-food-search'
-import { useFavorites } from '@/hooks/use-favorites'
 import { FoodListItem } from './food-list-item'
 import { Input } from '@/components/ui/input'
 import type { Food } from '@/lib/types/food'
@@ -24,8 +23,6 @@ export function SearchTab({ active, onSelectFood, onQuickAddFood }: SearchTabPro
     }
   }, [active])
   const { foods, isLoading } = useFoodSearch(query)
-  const { favorites, toggleFavorite } = useFavorites()
-  const favoriteIds = new Set(favorites.map((f) => f.id))
 
   return (
     <div className="space-y-3">
@@ -52,14 +49,12 @@ export function SearchTab({ active, onSelectFood, onQuickAddFood }: SearchTabPro
       )}
 
       <div className="divide-y divide-[#1e293b]">
-        {foods.map((food) => (
+        {foods.map((food, i) => (
           <FoodListItem
-            key={food.id}
+            key={food.id || `search-${i}`}
             food={food}
-            isFavorite={favoriteIds.has(food.id)}
             onSelect={onSelectFood}
             onQuickAdd={onQuickAddFood}
-            onToggleFavorite={toggleFavorite}
           />
         ))}
       </div>

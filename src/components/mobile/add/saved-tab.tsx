@@ -15,7 +15,7 @@ interface SavedTabProps {
 
 export function SavedTab({ onSelectFood, onQuickAddFood, onSelectMeal }: SavedTabProps) {
   const { meals, isLoading: mealsLoading } = useMeals()
-  const { favorites, isLoading: favoritesLoading, toggleFavorite } = useFavorites()
+  const { favorites, isLoading: favoritesLoading } = useFavorites()
 
   if (mealsLoading && favoritesLoading) {
     return (
@@ -110,7 +110,6 @@ export function SavedTab({ onSelectFood, onQuickAddFood, onSelectMeal }: SavedTa
                 isFavorite={true}
                 onSelect={onSelectFood}
                 onQuickAdd={onQuickAddFood}
-                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>

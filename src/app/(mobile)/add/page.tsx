@@ -53,6 +53,19 @@ export default function AddPage() {
     async (food: Food, servings = 1) => {
       vibrate()
 
+      // Persist barcode-scanned foods that haven't been saved yet
+      if (!food.id) {
+        try {
+          food = await apiClient<Food>('/api/foods/barcode', {
+            method: 'POST',
+            body: food,
+          })
+        } catch {
+          toast.error('Failed to save food')
+          return
+        }
+      }
+
       // Optimistic update
       const optimisticEntry = {
         id: `temp-${Date.now()}`,
