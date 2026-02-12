@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { AmountInput } from '@/components/mobile/amount-input'
 import type { DailyLogEntry, MealType } from '@/lib/types/log'
 
 interface EditEntrySheetProps {
@@ -37,6 +38,9 @@ export function EditEntrySheet({ entry, open, onClose, onSave }: EditEntrySheetP
   const baseCalories = entry.food ? Number(entry.calories) / entry.servings : 0
   const previewCals = Math.round(baseCalories * servings)
 
+  // Use the food's serving_size for amount mode; meals fall back to servings stepper
+  const servingSizeForInput = entry.food?.serving_size ?? null
+
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
       <DrawerContent className="border-[#1e293b] bg-[#0f172a]">
@@ -44,24 +48,12 @@ export function EditEntrySheet({ entry, open, onClose, onSave }: EditEntrySheetP
           <DrawerTitle className="text-[#f8fafc]">Edit Entry</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-4 px-4 pb-8">
-          {/* Servings */}
-          <div className="flex items-center justify-center gap-6 py-2">
-            <button
-              onClick={() => setServings((s) => Math.max(0.25, Math.round((s - 0.25) * 4) / 4))}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#1e293b] text-lg text-[#94a3b8]"
-            >
-              -
-            </button>
-            <span className="min-w-[60px] text-center text-2xl font-light tabular-nums text-[#f8fafc]">
-              {servings}
-            </span>
-            <button
-              onClick={() => setServings((s) => Math.round((s + 0.25) * 4) / 4)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#1e293b] text-lg text-[#94a3b8]"
-            >
-              +
-            </button>
-          </div>
+          {/* Amount / servings */}
+          <AmountInput
+            servingSize={servingSizeForInput}
+            servings={servings}
+            onServingsChange={setServings}
+          />
 
           <p className="text-center text-sm text-[#64748b]">{previewCals} cal</p>
 

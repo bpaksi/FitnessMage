@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { parseServingSize as parseShared } from '@/lib/utils/serving-size'
 
 const UNITS = [
   'serving',
@@ -33,14 +34,14 @@ interface ServingSizeInputProps {
   onChange: (value: string) => void
 }
 
-function parseServingSize(raw: string): { quantity: string; unit: string } {
-  const trimmed = raw.trim()
-  for (const u of UNITS) {
-    if (trimmed.endsWith(u)) {
-      const q = trimmed.slice(0, -u.length).trim()
-      return { quantity: q || '1', unit: u }
-    }
+function parseForForm(raw: string): { quantity: string; unit: string } {
+  const parsed = parseShared(raw)
+  if (parsed.parseable) {
+    const matchedUnit = UNITS.find((u) => u === parsed.unit) ?? 'serving'
+    return { quantity: parsed.quantity.toString(), unit: matchedUnit }
   }
+  // Fallback: simple split for partial/in-progress input
+  const trimmed = raw.trim()
   const parts = trimmed.split(/\s+/)
   if (parts.length >= 2) {
     const lastWord = parts[parts.length - 1].toLowerCase()
@@ -53,7 +54,7 @@ function parseServingSize(raw: string): { quantity: string; unit: string } {
 }
 
 export function ServingSizeInput({ value, onChange }: ServingSizeInputProps) {
-  const { quantity, unit } = parseServingSize(value)
+  const { quantity, unit } = parseForForm(value)
 
   function update(newQuantity: string, newUnit: string) {
     onChange(`${newQuantity} ${newUnit}`.trim())

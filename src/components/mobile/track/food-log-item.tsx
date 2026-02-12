@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { ArrowRightLeft, SlidersHorizontal, Star, Trash2 } from 'lucide-react'
+import { getDisplayAmount } from '@/components/mobile/amount-input'
 import type { DailyLogEntry } from '@/lib/types/log'
 
 interface FoodLogItemProps {
@@ -138,8 +139,13 @@ export function FoodLogItem({ entry, isFavorite, onEditEntry, onToggleFavorite, 
   const foodName = entry.meal
     ? entry.meal.name
     : entry.food
-      ? `${entry.food.name}${entry.food.serving_size ? ` (${entry.food.serving_size})` : ''}`
+      ? entry.food.name
       : 'Unknown food'
+
+  // Show consumed amount in native unit when parseable, e.g. "6.4 oz"
+  const displayAmount = entry.food
+    ? getDisplayAmount(entry.food.serving_size, entry.servings)
+    : null
 
   const transitionClass = swiping
     ? ''
@@ -206,9 +212,11 @@ export function FoodLogItem({ entry, isFavorite, onEditEntry, onToggleFavorite, 
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-[#f8fafc]">
               {foodName}
-              {entry.servings !== 1 && (
-                <span className="text-[#64748b]"> x{entry.servings}</span>
-              )}
+              {displayAmount
+                ? <span className="text-[#64748b]"> ({displayAmount})</span>
+                : entry.servings !== 1 && (
+                    <span className="text-[#64748b]"> x{entry.servings}</span>
+                  )}
             </p>
           </div>
           <span className="ml-3 shrink-0 text-xs tabular-nums text-[#64748b]">

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Pill } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { AmountInput } from '@/components/mobile/amount-input'
 import type { Food } from '@/lib/types/food'
 
 interface FoodDetailCardProps {
@@ -55,23 +56,13 @@ export function FoodDetailCard({ food, onAdd, onCancel }: FoodDetailCardProps) {
         <p className="text-sm font-medium text-[#f8fafc]">{food.serving_size || '1 serving'}</p>
       </div>
 
-      {/* Serving stepper */}
-      <div className="mt-3 flex items-center justify-center gap-4">
-        <button
-          onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-[#1e293b] text-[#f8fafc] hover:bg-[#1e293b]"
-        >
-          &minus;
-        </button>
-        <span className="min-w-[5rem] text-center text-sm font-medium text-[#f8fafc]">
-          {servings} {servings === 1 ? 'serving' : 'servings'}
-        </span>
-        <button
-          onClick={() => setServings(servings + 0.5)}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-[#1e293b] text-[#f8fafc] hover:bg-[#1e293b]"
-        >
-          +
-        </button>
+      {/* Amount input */}
+      <div className="mt-3">
+        <AmountInput
+          servingSize={food.serving_size}
+          servings={servings}
+          onServingsChange={setServings}
+        />
       </div>
 
       {/* Nutrient grid — macros for food, vitamins for supplements */}
