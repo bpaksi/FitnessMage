@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { ArrowRightLeft, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, Star, Trash2 } from 'lucide-react'
 import type { DailyLogEntry } from '@/lib/types/log'
 
 interface FoodLogItemProps {
   entry: DailyLogEntry
+  isFavorite: boolean
   onEditEntry: (entry: DailyLogEntry) => void
   onEditFood: (entry: DailyLogEntry) => void
+  onToggleFavorite: (entry: DailyLogEntry) => void
   onMove: (entry: DailyLogEntry) => void
   onDelete: (entry: DailyLogEntry) => void
 }
@@ -19,7 +21,7 @@ function vibrate() {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50)
 }
 
-export function FoodLogItem({ entry, onEditEntry, onEditFood, onMove, onDelete }: FoodLogItemProps) {
+export function FoodLogItem({ entry, isFavorite, onEditEntry, onEditFood, onToggleFavorite, onMove, onDelete }: FoodLogItemProps) {
   const [expanded, setExpanded] = useState(false)
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
@@ -210,7 +212,7 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onMove, onDelete }
             </div>
 
             {/* Actions — no delete here, it's swipe-accessible */}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => onEditEntry(entry)}
                 className="rounded-md bg-[#0f172a] px-3 py-1.5 text-xs text-[#94a3b8] transition-colors hover:bg-[#1e293b]"
@@ -223,6 +225,18 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onMove, onDelete }
               >
                 Edit food
               </button>
+              {entry.food_id && (
+                <button
+                  onClick={() => {
+                    vibrate()
+                    onToggleFavorite(entry)
+                  }}
+                  className="ml-auto rounded-md bg-[#0f172a] p-1.5 transition-colors hover:bg-[#1e293b]"
+                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Star size={16} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-[#64748b]'} />
+                </button>
+              )}
             </div>
           </div>
         )}

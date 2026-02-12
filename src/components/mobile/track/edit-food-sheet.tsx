@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Star } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { apiClient } from '@/lib/mobile/api-client'
-import { useFavorites } from '@/hooks/use-favorites'
 import type { DailyLogEntry } from '@/lib/types/log'
 
 interface EditFoodSheetProps {
@@ -25,9 +23,6 @@ export function EditFoodSheet({ entry, open, onClose, onSaved }: EditFoodSheetPr
   const [carbs, setCarbs] = useState(0)
   const [fat, setFat] = useState(0)
   const [saving, setSaving] = useState(false)
-  const { favorites, toggleFavorite } = useFavorites()
-
-  const isFavorite = entry?.food_id ? favorites.some((f) => f.id === entry.food_id) : false
 
   useEffect(() => {
     if (entry?.food) {
@@ -63,18 +58,7 @@ export function EditFoodSheet({ entry, open, onClose, onSaved }: EditFoodSheetPr
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
       <DrawerContent className="border-[#1e293b] bg-[#0f172a]">
         <DrawerHeader>
-          <div className="flex items-center justify-between">
-            <DrawerTitle className="text-[#f8fafc]">Edit Food</DrawerTitle>
-            {entry?.food_id && (
-              <button
-                onClick={() => entry.food_id && toggleFavorite(entry.food_id, isFavorite)}
-                className="p-1"
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                <Star size={20} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-[#64748b]'} />
-              </button>
-            )}
-          </div>
+          <DrawerTitle className="text-[#f8fafc]">Edit Food</DrawerTitle>
         </DrawerHeader>
         <div className="space-y-3 px-4 pb-8">
           <div className="space-y-1.5">

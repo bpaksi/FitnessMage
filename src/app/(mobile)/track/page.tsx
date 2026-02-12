@@ -5,6 +5,7 @@ import { Copy, Droplets } from 'lucide-react'
 import { toast } from 'sonner'
 import { useMobileContext } from '@/contexts/mobile-context'
 import { useDailyLog } from '@/hooks/use-daily-log'
+import { useFavorites } from '@/hooks/use-favorites'
 import { useDailySummary } from '@/hooks/use-daily-summary'
 import { apiClient } from '@/lib/mobile/api-client'
 import { BottomNav } from '@/components/mobile/bottom-nav'
@@ -37,6 +38,7 @@ export default function TrackPage() {
   const { selectedDate } = useMobileContext()
   const { entries, isLoading, mutate: mutateLog } = useDailyLog(selectedDate)
   const { mutate: mutateSummary } = useDailySummary(selectedDate)
+  const { favorites, toggleFavorite } = useFavorites()
 
   const [editingEntry, setEditingEntry] = useState<DailyLogEntry | null>(null)
   const [editingFood, setEditingFood] = useState<DailyLogEntry | null>(null)
@@ -239,8 +241,10 @@ export default function TrackPage() {
                   <FoodLogItem
                     key={entry.id}
                     entry={entry}
+                    isFavorite={entry.food_id ? favorites.some((f) => f.id === entry.food_id) : false}
                     onEditEntry={setEditingEntry}
                     onEditFood={setEditingFood}
+                    onToggleFavorite={(e) => e.food_id && toggleFavorite(e.food_id, favorites.some((f) => f.id === e.food_id))}
                     onMove={setMovingEntry}
                     onDelete={setDeletingEntry}
                   />
