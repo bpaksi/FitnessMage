@@ -189,8 +189,10 @@ export async function GET(request: Request) {
       return error('Product not found', 404)
     }
 
-    // Don't return foods with no nutrition data — let user enter manually
-    if (isFoodDataEmpty(foodData as Record<string, unknown>)) {
+    // Don't return regular foods with no nutrition data — let user enter manually.
+    // Supplements are still useful for their identity (name/brand/barcode) even
+    // when micronutrient mapping yields no data.
+    if (!supplement && isFoodDataEmpty(foodData as Record<string, unknown>)) {
       return error('Product not found', 404)
     }
 
