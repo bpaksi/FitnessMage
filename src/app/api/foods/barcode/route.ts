@@ -154,6 +154,10 @@ export async function GET(request: Request) {
         let results = await searchUSDA(code, apiKey)
         if (results.length === 0 && offProduct?.product_name) {
           results = await searchUSDA(offProduct.product_name as string, apiKey)
+          // Prefer branded items — survey/research entries have unusable names
+          results.sort((a, b) =>
+            (a.dataType === 'Branded' ? 0 : 1) - (b.dataType === 'Branded' ? 0 : 1),
+          )
         }
         for (const r of results) {
           const t = transformUSDAFood(r, { allowEmptyMacros: supplement })
@@ -174,10 +178,19 @@ export async function GET(request: Request) {
         ...usdaFood,
         barcode: code,
         category: supplement ? 'supplement' : 'food',
+        // Prefer OFF product name/brand — USDA descriptions can be
+        // research titles or generic survey names for non-branded items
+        ...(offProduct?.product_name ? { name: offProduct.product_name as string } : {}),
+        ...(offProduct?.brands ? { brand: offProduct.brands as string } : {}),
       }
     } else if (offFood) {
       foodData = offFood
     } else {
+      return error('Product not found', 404)
+    }
+
+    // Don't cache foods with no nutrition data — let user enter manually
+    if (isFoodDataEmpty(foodData as Record<string, unknown>)) {
       return error('Product not found', 404)
     }
 
