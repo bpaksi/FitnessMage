@@ -19,6 +19,30 @@ export interface Food {
   vitamin_d: number | null
   calcium: number | null
   iron: number | null
+  category: 'food' | 'supplement'
+  vitamin_a: number | null
+  vitamin_c: number | null
+  vitamin_e: number | null
+  vitamin_k: number | null
+  thiamin: number | null
+  riboflavin: number | null
+  niacin: number | null
+  vitamin_b6: number | null
+  folate: number | null
+  vitamin_b12: number | null
+  choline: number | null
+  retinol: number | null
+  magnesium: number | null
+  phosphorus: number | null
+  zinc: number | null
+  copper: number | null
+  selenium: number | null
+  manganese: number | null
+  monounsaturated_fat: number | null
+  polyunsaturated_fat: number | null
+  caffeine: number | null
+  alcohol: number | null
+  water_content: number | null
   source: 'openfoodfacts' | 'usda' | 'manual'
   user_id: string | null
   created_at: string
@@ -56,6 +80,30 @@ export interface CreateFoodInput {
   vitamin_d?: number
   calcium?: number
   iron?: number
+  category?: 'food' | 'supplement'
+  vitamin_a?: number
+  vitamin_c?: number
+  vitamin_e?: number
+  vitamin_k?: number
+  thiamin?: number
+  riboflavin?: number
+  niacin?: number
+  vitamin_b6?: number
+  folate?: number
+  vitamin_b12?: number
+  choline?: number
+  retinol?: number
+  magnesium?: number
+  phosphorus?: number
+  zinc?: number
+  copper?: number
+  selenium?: number
+  manganese?: number
+  monounsaturated_fat?: number
+  polyunsaturated_fat?: number
+  caffeine?: number
+  alcohol?: number
+  water_content?: number
 }
 
 export interface FoodFavorite {

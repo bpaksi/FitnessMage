@@ -21,6 +21,9 @@ const UNITS = [
   'slice',
   'bowl',
   'scoop',
+  'capsule',
+  'tablet',
+  'softgel',
 ] as const
 
 const FRACTION_PILLS = ['1/4', '1/3', '1/2', '2/3', '3/4', '1', '1.5', '2'] as const

@@ -14,6 +14,42 @@ CREATE TABLE IF NOT EXISTS foods (
   fiber NUMERIC,
   sugar NUMERIC,
   sodium NUMERIC,
+  category TEXT NOT NULL DEFAULT 'food' CHECK (category IN ('food', 'supplement')),
+
+  -- Extended nutrition (added via extended_nutrition_columns migration)
+  saturated_fat NUMERIC,
+  trans_fat NUMERIC,
+  cholesterol NUMERIC,
+  potassium NUMERIC,
+  vitamin_d NUMERIC,
+  calcium NUMERIC,
+  iron NUMERIC,
+
+  -- Expanded nutrients
+  vitamin_a REAL,
+  vitamin_c REAL,
+  vitamin_e REAL,
+  vitamin_k REAL,
+  thiamin REAL,
+  riboflavin REAL,
+  niacin REAL,
+  vitamin_b6 REAL,
+  folate REAL,
+  vitamin_b12 REAL,
+  choline REAL,
+  retinol REAL,
+  magnesium REAL,
+  phosphorus REAL,
+  zinc REAL,
+  copper REAL,
+  selenium REAL,
+  manganese REAL,
+  monounsaturated_fat REAL,
+  polyunsaturated_fat REAL,
+  caffeine REAL,
+  alcohol REAL,
+  water_content REAL,
+
   source TEXT NOT NULL DEFAULT 'manual', -- 'openfoodfacts', 'usda', 'manual'
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- NULL = shared, set = personal
 

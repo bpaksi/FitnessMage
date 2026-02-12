@@ -1,6 +1,6 @@
 'use client'
 
-import { Star } from 'lucide-react'
+import { Pill, Star } from 'lucide-react'
 import type { Food } from '@/lib/types/food'
 
 interface FoodListItemProps {
@@ -40,7 +40,10 @@ export function FoodListItem({
       }}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-[#f8fafc]">{displayName}</p>
+        <p className="truncate text-sm text-[#f8fafc]">
+          {food.category === 'supplement' && <Pill size={14} className="mr-1 inline text-[#a78bfa]" />}
+          {displayName}
+        </p>
         <p className="text-xs text-[#64748b]">
           {Math.round(food.calories)} cal
           {food.brand && <span className="ml-1">&middot; {food.brand}</span>}

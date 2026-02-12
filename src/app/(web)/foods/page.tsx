@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, BookOpen, Pencil, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft } from 'lucide-react'
+import { Plus, BookOpen, Pencil, Trash2, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, Pill } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,16 +35,23 @@ export default function FoodsPage() {
   const [sortColumn, setSortColumn] = useState<SortColumn>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [page, setPage] = useState(1)
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'food' | 'supplement'>('all')
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return foods
-    const q = searchQuery.toLowerCase()
-    return foods.filter((f) =>
-      f.name.toLowerCase().includes(q) ||
-      (f.brand && f.brand.toLowerCase().includes(q)) ||
-      (f.serving_size && f.serving_size.toLowerCase().includes(q))
-    )
-  }, [foods, searchQuery])
+    let result = foods
+    if (categoryFilter !== 'all') {
+      result = result.filter((f) => f.category === categoryFilter)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((f) =>
+        f.name.toLowerCase().includes(q) ||
+        (f.brand && f.brand.toLowerCase().includes(q)) ||
+        (f.serving_size && f.serving_size.toLowerCase().includes(q))
+      )
+    }
+    return result
+  }, [foods, searchQuery, categoryFilter])
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -166,6 +173,21 @@ export default function FoodsPage() {
                 className="border-[#1e293b] bg-[#0f172a] pl-9 text-[#f8fafc] placeholder:text-[#64748b]"
               />
             </div>
+            <div className="flex gap-1 rounded-lg bg-[#0f172a] p-1">
+              {(['all', 'food', 'supplement'] as const).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => { setCategoryFilter(cat); setPage(1) }}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    categoryFilter === cat
+                      ? 'bg-[#1e293b] text-[#f8fafc]'
+                      : 'text-[#64748b] hover:text-[#94a3b8]'
+                  }`}
+                >
+                  {cat === 'all' ? 'All' : cat === 'food' ? 'Foods' : 'Supplements'}
+                </button>
+              ))}
+            </div>
             <Button onClick={openCreateFood} className="bg-[#3b82f6] text-white hover:bg-[#2563eb]">
               <Plus className="mr-1 h-4 w-4" />
               New Food
@@ -235,7 +257,10 @@ export default function FoodsPage() {
                         {paginated.map((food) => (
                           <tr key={food.id} className="border-b border-[#1e293b] last:border-0">
                             <td className="px-4 py-3">
-                              <p className="text-sm text-[#f8fafc]">{food.name}</p>
+                              <p className="text-sm text-[#f8fafc]">
+                                {food.category === 'supplement' && <Pill size={14} className="mr-1 inline text-[#a78bfa]" />}
+                                {food.name}
+                              </p>
                               {food.brand && <p className="text-xs text-[#64748b]">{food.brand}</p>}
                             </td>
                             <td className="px-4 py-3 text-sm text-[#94a3b8]">{food.serving_size}</td>
