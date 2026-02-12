@@ -20,10 +20,13 @@ function isFoodDataEmpty(food: Record<string, unknown>): boolean {
   return MICRO_FIELDS.every((f) => food[f] == null)
 }
 
+const FOOD_KEYWORDS = ['shake', 'drink', 'beverage', 'bar', 'ready to drink', 'rtd', 'smoothie', 'juice']
+
 function detectSupplement(categories?: string): boolean {
   if (!categories) return false
   const lower = categories.toLowerCase()
-  return lower.includes('supplement') || lower.includes('vitamin')
+  if (!lower.includes('supplement') && !lower.includes('vitamin')) return false
+  return !FOOD_KEYWORDS.some((kw) => lower.includes(kw))
 }
 
 export async function GET(request: Request) {

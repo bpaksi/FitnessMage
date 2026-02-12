@@ -62,22 +62,34 @@ function isFoodDataEmpty(food: Record<string, unknown>): boolean {
   return MICRO_FIELDS.every((f) => food[f] == null)
 }
 
+/** Food keywords that override supplement classification from OFF categories */
+const FOOD_KEYWORDS = ['shake', 'drink', 'beverage', 'bar', 'ready to drink', 'rtd', 'smoothie', 'juice']
+
 function detectSupplement(categories?: string): boolean {
   if (!categories) return false
   const lower = categories.toLowerCase()
-  return lower.includes('supplement') || lower.includes('vitamin')
+  if (!lower.includes('supplement') && !lower.includes('vitamin')) return false
+  // Protein shakes, drinks, bars etc. are food even if OFF flags them as supplements
+  return !FOOD_KEYWORDS.some((kw) => lower.includes(kw))
 }
 
-/** Build a food row from OpenFoodFacts data including micronutrients */
+/** Build a food row from OpenFoodFacts data including micronutrients.
+ *  Prefers per-serving values when available so the numbers match the label. */
 function buildOFFFood(
   code: string,
   product: Record<string, unknown>,
   nutriments: Record<string, unknown>,
   supplement: boolean,
 ) {
+  const servingSize = (product.serving_size as string) || '100g'
+  const hasServing = typeof nutriments['energy-kcal_serving'] === 'number'
+  const useServing = hasServing && servingSize !== '100g'
+  const sfx = useServing ? '_serving' : '_100g'
+
   const micros: Record<string, number> = {}
   for (const [offKey, dbField] of Object.entries(OFF_NUTRIENT_MAP)) {
-    const val = nutriments[offKey]
+    const key = useServing ? offKey.replace('_100g', '_serving') : offKey
+    const val = nutriments[key]
     if (typeof val === 'number' && val > 0) {
       micros[dbField] = round1(val)
     }
@@ -87,18 +99,20 @@ function buildOFFFood(
     barcode: code,
     name: (product.product_name as string) || 'Unknown Product',
     brand: (product.brands as string) || null,
-    serving_size: (product.serving_size as string) || '100g',
-    serving_size_grams: nutriments.serving_size
-      ? parseFloat(String(nutriments.serving_size))
+    serving_size: useServing ? servingSize : '100g',
+    serving_size_grams: useServing
+      ? (typeof product.serving_quantity === 'number'
+          ? product.serving_quantity
+          : null)
       : 100,
-    calories: Math.round((nutriments['energy-kcal_100g'] as number) || 0),
-    protein: round1((nutriments.proteins_100g as number) || 0),
-    carbs: round1((nutriments.carbohydrates_100g as number) || 0),
-    fat: round1((nutriments.fat_100g as number) || 0),
-    fiber: nutriments.fiber_100g ? round1(nutriments.fiber_100g as number) : null,
-    sugar: nutriments.sugars_100g ? round1(nutriments.sugars_100g as number) : null,
-    sodium: nutriments.sodium_100g
-      ? Math.round((nutriments.sodium_100g as number) * 1000)
+    calories: Math.round((nutriments[`energy-kcal${sfx}`] as number) || 0),
+    protein: round1((nutriments[`proteins${sfx}`] as number) || 0),
+    carbs: round1((nutriments[`carbohydrates${sfx}`] as number) || 0),
+    fat: round1((nutriments[`fat${sfx}`] as number) || 0),
+    fiber: nutriments[`fiber${sfx}`] ? round1(nutriments[`fiber${sfx}`] as number) : null,
+    sugar: nutriments[`sugars${sfx}`] ? round1(nutriments[`sugars${sfx}`] as number) : null,
+    sodium: nutriments[`sodium${sfx}`]
+      ? Math.round((nutriments[`sodium${sfx}`] as number) * 1000)
       : null,
     ...micros,
     source: 'openfoodfacts',
