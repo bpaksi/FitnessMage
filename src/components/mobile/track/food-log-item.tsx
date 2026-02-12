@@ -1,24 +1,25 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Trash2 } from 'lucide-react'
+import { ArrowRightLeft, Trash2 } from 'lucide-react'
 import type { DailyLogEntry } from '@/lib/types/log'
 
 interface FoodLogItemProps {
   entry: DailyLogEntry
   onEditEntry: (entry: DailyLogEntry) => void
   onEditFood: (entry: DailyLogEntry) => void
+  onMove: (entry: DailyLogEntry) => void
   onDelete: (entry: DailyLogEntry) => void
 }
 
-const DELETE_ZONE_WIDTH = 72
-const SNAP_THRESHOLD_PX = 36
+const ACTION_ZONE_WIDTH = 144
+const SNAP_THRESHOLD_PX = 72
 
 function vibrate() {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50)
 }
 
-export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLogItemProps) {
+export function FoodLogItem({ entry, onEditEntry, onEditFood, onMove, onDelete }: FoodLogItemProps) {
   const [expanded, setExpanded] = useState(false)
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
@@ -83,8 +84,8 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
       currentX.current = clampedDx
       setOffsetX(clampedDx)
 
-      // Clamp max swipe to delete zone width
-      const maxSwipe = DELETE_ZONE_WIDTH + 20
+      // Clamp max swipe to action zone width
+      const maxSwipe = ACTION_ZONE_WIDTH + 20
       if (Math.abs(clampedDx) > maxSwipe) {
         currentX.current = -maxSwipe
         setOffsetX(-maxSwipe)
@@ -98,14 +99,21 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
     setSwiping(false)
 
     if (Math.abs(currentX.current) >= SNAP_THRESHOLD_PX) {
-      // Settle to show delete zone
-      setOffsetX(-DELETE_ZONE_WIDTH)
+      // Settle to show action zones
+      setOffsetX(-ACTION_ZONE_WIDTH)
       setSettled(true)
     } else {
       // Snap back
       setOffsetX(0)
     }
   }, [swiping])
+
+  const handleMoveClick = useCallback(() => {
+    vibrate()
+    setSettled(false)
+    setOffsetX(0)
+    onMove(entry)
+  }, [entry, onMove])
 
   const handleDeleteClick = useCallback(() => {
     vibrate()
@@ -129,11 +137,18 @@ export function FoodLogItem({ entry, onEditEntry, onEditFood, onDelete }: FoodLo
       ref={containerRef}
       className="relative overflow-hidden border-b border-[#1e293b] last:border-b-0"
     >
-      {/* Delete zone behind */}
-      <div className="absolute inset-y-0 right-0 flex w-[72px] items-center justify-center bg-red-600">
+      {/* Action zones behind */}
+      <div className="absolute inset-y-0 right-0 flex w-[144px]">
+        <button
+          onClick={handleMoveClick}
+          className="flex h-full w-[72px] items-center justify-center bg-[#3b82f6]"
+          aria-label="Move to another meal"
+        >
+          <ArrowRightLeft size={20} className="text-white" />
+        </button>
         <button
           onClick={handleDeleteClick}
-          className="flex h-full w-full items-center justify-center"
+          className="flex h-full w-[72px] items-center justify-center bg-red-600"
           aria-label="Delete entry"
         >
           <Trash2 size={20} className="text-white" />

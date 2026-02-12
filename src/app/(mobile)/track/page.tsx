@@ -13,6 +13,7 @@ import { MealGroup } from '@/components/mobile/track/meal-group'
 import { FoodLogItem } from '@/components/mobile/track/food-log-item'
 import { EditEntrySheet } from '@/components/mobile/track/edit-entry-sheet'
 import { EditFoodSheet } from '@/components/mobile/track/edit-food-sheet'
+import { MoveMealSheet } from '@/components/mobile/track/move-meal-sheet'
 import { CopyMealSheet } from '@/components/mobile/track/copy-meal-sheet'
 import {
   AlertDialog,
@@ -40,6 +41,7 @@ export default function TrackPage() {
   const [editingEntry, setEditingEntry] = useState<DailyLogEntry | null>(null)
   const [editingFood, setEditingFood] = useState<DailyLogEntry | null>(null)
   const [deletingEntry, setDeletingEntry] = useState<DailyLogEntry | null>(null)
+  const [movingEntry, setMovingEntry] = useState<DailyLogEntry | null>(null)
   const [copyOpen, setCopyOpen] = useState(false)
 
   const groupedEntries = MEAL_ORDER.reduce(
@@ -66,6 +68,35 @@ export default function TrackPage() {
       })
       mutateLog()
       mutateSummary()
+    },
+    [entries, mutateLog, mutateSummary],
+  )
+
+  const handleMove = useCallback(
+    async (id: string, targetMealType: MealType) => {
+      vibrate()
+      setMovingEntry(null)
+
+      const MEAL_LABELS: Record<MealType, string> = {
+        breakfast: 'Breakfast',
+        lunch: 'Lunch',
+        dinner: 'Dinner',
+        snack: 'Snack',
+      }
+
+      // Optimistic
+      mutateLog(
+        entries.map((e) => (e.id === id ? { ...e, meal_type: targetMealType } : e)),
+        false,
+      )
+
+      await apiClient(`/api/log/${id}`, {
+        method: 'PATCH',
+        body: { meal_type: targetMealType },
+      })
+      mutateLog()
+      mutateSummary()
+      toast.success(`Moved to ${MEAL_LABELS[targetMealType]}`)
     },
     [entries, mutateLog, mutateSummary],
   )
@@ -171,6 +202,7 @@ export default function TrackPage() {
                     entry={entry}
                     onEditEntry={setEditingEntry}
                     onEditFood={setEditingFood}
+                    onMove={setMovingEntry}
                     onDelete={setDeletingEntry}
                   />
                 ))}
@@ -196,6 +228,13 @@ export default function TrackPage() {
           mutateLog()
           mutateSummary()
         }}
+      />
+
+      <MoveMealSheet
+        entry={movingEntry}
+        open={!!movingEntry}
+        onClose={() => setMovingEntry(null)}
+        onMove={handleMove}
       />
 
       <CopyMealSheet
