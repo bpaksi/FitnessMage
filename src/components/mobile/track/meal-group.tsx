@@ -26,7 +26,7 @@ interface MealGroupProps {
 }
 
 export function MealGroup({ mealType, entries, children }: MealGroupProps) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(entries.length > 0)
 
   const totalCals = entries.reduce((sum, e) => sum + Number(e.calories), 0)
 
