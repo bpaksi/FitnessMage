@@ -6,12 +6,12 @@ import { StatusCell } from './status-cell'
 
 interface DayData {
   date: string
-  totals: { calories: number; protein: number; carbs: number; fat: number } | null
+  totals: { calories: number; protein: number; carbs: number; fat: number; water: number } | null
 }
 
 interface WeekGridProps {
   days: DayData[]
-  goals: { calories: number; protein: number; carbs: number; fat: number }
+  goals: { calories: number; protein: number; carbs: number; fat: number; water: number }
 }
 
 const MACRO_ROWS = [
@@ -19,6 +19,7 @@ const MACRO_ROWS = [
   { key: 'protein' as const, label: 'Pro', color: '#ef4444' },
   { key: 'carbs' as const, label: 'Carb', color: '#3b82f6' },
   { key: 'fat' as const, label: 'Fat', color: '#eab308' },
+  { key: 'water' as const, label: 'Water', color: '#38bdf8' },
 ]
 
 function getDayLabel(dateStr: string): string {

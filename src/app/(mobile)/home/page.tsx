@@ -29,7 +29,7 @@ export default function HomePage() {
       <main className="flex-1 px-4 pt-6">
         {isLoading ? (
           <div className="space-y-6">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="space-y-2">
                 <div className="h-3 w-20 animate-pulse rounded bg-[#1e293b]" />
                 <div className="h-2.5 w-full animate-pulse rounded-full bg-[#1e293b]" />
@@ -65,6 +65,13 @@ export default function HomePage() {
               goal={summary.goals.fat}
               color="#eab308"
               unit="g"
+            />
+            <MacroProgressBar
+              label="Water"
+              current={summary.totals.water}
+              goal={summary.goals.water}
+              color="#38bdf8"
+              unit=" glasses"
             />
 
             {summary.extendedNutrients && (

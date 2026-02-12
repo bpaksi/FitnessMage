@@ -3,13 +3,13 @@ import { apiClient } from '@/lib/mobile/api-client'
 
 interface WeekDay {
   date: string
-  totals: { calories: number; protein: number; carbs: number; fat: number } | null
+  totals: { calories: number; protein: number; carbs: number; fat: number; water: number } | null
 }
 
 interface WeeklySummary {
   dates: string[]
   days: WeekDay[]
-  goals: { calories: number; protein: number; carbs: number; fat: number }
+  goals: { calories: number; protein: number; carbs: number; fat: number; water: number }
 }
 
 export function useWeeklySummary(weekOf: string) {

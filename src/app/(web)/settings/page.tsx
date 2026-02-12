@@ -14,7 +14,7 @@ function SettingsContent() {
   const section = searchParams.get('section') ?? 'daily-goals'
 
   const [settings, setSettings] = useState<UserSettings | null>(null)
-  const [goals, setGoals] = useState<MacroGoals>({ calories: 2000, protein: 150, carbs: 200, fat: 65 })
+  const [goals, setGoals] = useState<MacroGoals>({ calories: 2000, protein: 150, carbs: 200, fat: 65, water: 8 })
   const [weekStart, setWeekStart] = useState<WeekStartDay>('monday')
   const [units, setUnits] = useState<Units>('metric')
   const [mealTimes, setMealTimes] = useState<MealTimeBoundaries>({

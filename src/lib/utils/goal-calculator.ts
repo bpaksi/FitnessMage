@@ -21,6 +21,7 @@ export function distributeCalories(calories: number, ratio: MacroRatio): MacroGo
     protein: Math.round((calories * ratio.protein) / CALORIES_PER_GRAM_PROTEIN),
     carbs: Math.round((calories * ratio.carbs) / CALORIES_PER_GRAM_CARBS),
     fat: Math.round((calories * ratio.fat) / CALORIES_PER_GRAM_FAT),
+    water: 8,
   }
 }
 

@@ -22,7 +22,8 @@ export function DailyGoalsSection({ goals, savedGoals, onGoalsChange, onSave }: 
     goals.calories !== savedGoals.calories ||
     goals.protein !== savedGoals.protein ||
     goals.carbs !== savedGoals.carbs ||
-    goals.fat !== savedGoals.fat
+    goals.fat !== savedGoals.fat ||
+    goals.water !== savedGoals.water
 
   return (
     <Card className="border-[#1e293b] bg-[#0f172a]">
@@ -65,6 +66,15 @@ export function DailyGoalsSection({ goals, savedGoals, onGoalsChange, onSave }: 
               type="number"
               value={goals.fat}
               onChange={(e) => handleInputChange('fat', +e.target.value)}
+              className="border-[#1e293b] bg-[#020817] text-[#f8fafc]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[#94a3b8]">Water (glasses)</Label>
+            <Input
+              type="number"
+              value={goals.water}
+              onChange={(e) => handleInputChange('water', +e.target.value)}
               className="border-[#1e293b] bg-[#020817] text-[#f8fafc]"
             />
           </div>

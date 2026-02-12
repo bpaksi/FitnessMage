@@ -3,6 +3,7 @@ export interface MacroGoals {
   protein: number
   carbs: number
   fat: number
+  water: number
 }
 
 export interface MealTimeRange {

@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       .eq('user_id', userId)
       .single()
 
-    const goals = settings?.goals || { calories: 2000, protein: 150, carbs: 200, fat: 65 }
+    const goals = (settings?.goals || { calories: 2000, protein: 150, carbs: 200, fat: 65, water: 8 }) as Record<string, number>
 
     // Calculate totals
     const totals = (entries || []).reduce(
@@ -46,6 +46,14 @@ export async function GET(request: Request) {
       }),
       { calories: 0, protein: 0, carbs: 0, fat: 0 },
     )
+
+    // Calculate water total (count glasses from Water food entries)
+    const waterTotal = (entries || []).reduce((acc, entry) => {
+      if (entry.food_id && entry.food?.name === 'Water') {
+        return acc + Number(entry.servings)
+      }
+      return acc
+    }, 0)
 
     // Calculate extended nutrient totals
     const extNutrientTotals: Record<string, number> = {}
@@ -94,8 +102,9 @@ export async function GET(request: Request) {
         protein: Math.round(totals.protein * 10) / 10,
         carbs: Math.round(totals.carbs * 10) / 10,
         fat: Math.round(totals.fat * 10) / 10,
+        water: waterTotal,
       },
-      goals,
+      goals: { ...goals, water: goals.water ?? 8 },
       entries: entries || [],
       extendedNutrients,
     })

@@ -77,6 +77,7 @@ export default function AddPage() {
                 ...current,
                 entries: [...current.entries, optimisticEntry as DailyLogEntry],
                 totals: {
+                  ...current.totals,
                   calories: current.totals.calories + optimisticEntry.calories,
                   protein: current.totals.protein + optimisticEntry.protein,
                   carbs: current.totals.carbs + optimisticEntry.carbs,
@@ -146,6 +147,7 @@ export default function AddPage() {
                 ...current,
                 entries: [...current.entries, optimisticEntry as DailyLogEntry],
                 totals: {
+                  ...current.totals,
                   calories: current.totals.calories + macros.calories,
                   protein: current.totals.protein + macros.protein,
                   carbs: current.totals.carbs + macros.carbs,

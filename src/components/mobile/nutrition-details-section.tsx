@@ -26,12 +26,6 @@ export function NutritionDetailsSection({ extendedNutrients }: NutritionDetailsS
     })
   }
 
-  const hasAnyData = EXTENDED_NUTRIENT_KEYS.some(
-    (key) => extendedNutrients[key]?.total > 0,
-  )
-
-  if (!hasAnyData) return null
-
   return (
     <section className="mt-6" aria-label="Extended nutrition details">
       <button

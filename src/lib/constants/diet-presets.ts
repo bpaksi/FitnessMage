@@ -15,7 +15,7 @@ export const DIET_PRESETS: DietPreset[] = [
     name: 'Keto',
     philosophy:
       'Forces the body into ketosis by drastically limiting carbs, burning fat as the primary fuel source',
-    goals: { calories: 2000, protein: 125, carbs: 25, fat: 155 },
+    goals: { calories: 2000, protein: 125, carbs: 25, fat: 155, water: 8 },
     ratio: { protein: 0.25, carbs: 0.05, fat: 0.70 },
   },
   {
@@ -23,7 +23,7 @@ export const DIET_PRESETS: DietPreset[] = [
     name: 'Paleo',
     philosophy:
       'Mimics ancestral eating patterns\u2014whole foods, no processed grains or sugars, emphasizing protein and healthy fats',
-    goals: { calories: 2000, protein: 150, carbs: 100, fat: 100 },
+    goals: { calories: 2000, protein: 150, carbs: 100, fat: 100, water: 8 },
     ratio: { protein: 0.30, carbs: 0.22, fat: 0.48 },
   },
   {
@@ -31,7 +31,7 @@ export const DIET_PRESETS: DietPreset[] = [
     name: 'Low Carb',
     philosophy:
       'Reduces carbohydrate intake to stabilize blood sugar and promote fat utilization without full ketosis',
-    goals: { calories: 2000, protein: 150, carbs: 75, fat: 110 },
+    goals: { calories: 2000, protein: 150, carbs: 75, fat: 110, water: 8 },
     ratio: { protein: 0.32, carbs: 0.16, fat: 0.52 },
   },
   {
@@ -39,7 +39,7 @@ export const DIET_PRESETS: DietPreset[] = [
     name: 'High Protein',
     philosophy:
       'Maximizes muscle protein synthesis and recovery, ideal for strength training and body recomposition',
-    goals: { calories: 2200, protein: 220, carbs: 165, fat: 65 },
+    goals: { calories: 2200, protein: 220, carbs: 165, fat: 65, water: 8 },
     ratio: { protein: 0.40, carbs: 0.30, fat: 0.30 },
   },
   {
@@ -47,7 +47,7 @@ export const DIET_PRESETS: DietPreset[] = [
     name: 'Balanced',
     philosophy:
       'Even macro distribution following general dietary guidelines, suitable for most activity levels',
-    goals: { calories: 2000, protein: 150, carbs: 200, fat: 65 },
+    goals: { calories: 2000, protein: 150, carbs: 200, fat: 65, water: 8 },
     ratio: { protein: 0.30, carbs: 0.40, fat: 0.30 },
   },
   {
@@ -55,7 +55,7 @@ export const DIET_PRESETS: DietPreset[] = [
     name: 'Zone 40/30/30',
     philosophy:
       'Balances hormonal response by maintaining a 40% carb, 30% protein, 30% fat ratio each meal',
-    goals: { calories: 2000, protein: 150, carbs: 200, fat: 67 },
+    goals: { calories: 2000, protein: 150, carbs: 200, fat: 67, water: 8 },
     ratio: { protein: 0.30, carbs: 0.40, fat: 0.30 },
   },
 ]

@@ -50,13 +50,16 @@ export async function GET(request: Request) {
       .single()
 
     const weekStartDay = settings?.week_start_day || 'monday'
-    const goals = settings?.goals || { calories: 2000, protein: 150, carbs: 200, fat: 65 }
+    const defaults = { calories: 2000, protein: 150, carbs: 200, fat: 65, water: 8 }
+    const goals = settings?.goals
+      ? { ...defaults, ...(settings.goals as Record<string, number>) }
+      : defaults
     const dates = getWeekDates(weekOf, weekStartDay)
 
-    // Get all logs for the week
+    // Get all logs for the week (include food name for water detection)
     const { data: entries, error: dbError } = await admin
       .from('daily_log')
-      .select('date, calories, protein, carbs, fat')
+      .select('date, calories, protein, carbs, fat, servings, food_id, food:foods(name)')
       .eq('user_id', userId)
       .gte('date', dates[0])
       .lte('date', dates[6])
@@ -64,14 +67,17 @@ export async function GET(request: Request) {
     if (dbError) return error(dbError.message)
 
     // Aggregate by date
-    const dayTotals = new Map<string, { calories: number; protein: number; carbs: number; fat: number }>()
+    const dayTotals = new Map<string, { calories: number; protein: number; carbs: number; fat: number; water: number }>()
     for (const entry of entries || []) {
-      const existing = dayTotals.get(entry.date) || { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      const existing = dayTotals.get(entry.date) || { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0 }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isWater = entry.food_id && (entry.food as any)?.name === 'Water'
       dayTotals.set(entry.date, {
         calories: existing.calories + Number(entry.calories),
         protein: existing.protein + Number(entry.protein),
         carbs: existing.carbs + Number(entry.carbs),
         fat: existing.fat + Number(entry.fat),
+        water: existing.water + (isWater ? Number(entry.servings) : 0),
       })
     }
 

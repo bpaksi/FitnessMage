@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Copy } from 'lucide-react'
+import { Copy, Droplets } from 'lucide-react'
 import { toast } from 'sonner'
 import { useMobileContext } from '@/contexts/mobile-context'
 import { useDailyLog } from '@/hooks/use-daily-log'
@@ -162,6 +162,36 @@ export default function TrackPage() {
     [selectedDate, mutateLog, mutateSummary],
   )
 
+  const handleAddWater = useCallback(async () => {
+    vibrate()
+
+    // Optimistic: add a placeholder water entry
+    const optimisticEntry: DailyLogEntry = {
+      id: `temp-water-${Date.now()}`,
+      user_id: '',
+      date: selectedDate,
+      food_id: 'water',
+      meal_id: null,
+      meal_type: 'snack',
+      servings: 1,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      logged_at: new Date().toISOString(),
+      food: { id: 'water', name: 'Water', serving_size: '8 oz', brand: null },
+    }
+    mutateLog([...entries, optimisticEntry], false)
+
+    await apiClient('/api/log/water', {
+      method: 'POST',
+      body: { date: selectedDate },
+    })
+    mutateLog()
+    mutateSummary()
+    toast.success('Water logged')
+  }, [selectedDate, entries, mutateLog, mutateSummary])
+
   return (
     <div className="flex min-h-svh flex-col pb-20">
       <header
@@ -170,13 +200,22 @@ export default function TrackPage() {
       >
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-medium text-[#f8fafc]">Track</h1>
-          <button
-            onClick={() => setCopyOpen(true)}
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-[#3b82f6] transition-colors active:bg-[#0f172a]"
-          >
-            <Copy size={14} />
-            <span>Copy from</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAddWater}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-[#38bdf8] transition-colors active:bg-[#0f172a]"
+            >
+              <Droplets size={14} />
+              <span>+ Water</span>
+            </button>
+            <button
+              onClick={() => setCopyOpen(true)}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-[#3b82f6] transition-colors active:bg-[#0f172a]"
+            >
+              <Copy size={14} />
+              <span>Copy from</span>
+            </button>
+          </div>
         </div>
         <DatePicker />
       </header>
