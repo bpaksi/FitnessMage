@@ -199,94 +199,166 @@ export type Database = {
       }
       foods: {
         Row: {
+          alcohol: number | null
           barcode: string | null
           brand: string | null
+          caffeine: number | null
           calcium: number | null
           calories: number
           carbs: number
+          category: string
           cholesterol: number | null
+          choline: number | null
           contributed_at: string | null
           contribution_error: string | null
           contribution_status: string | null
+          copper: number | null
           created_at: string | null
           fat: number
           fiber: number | null
+          folate: number | null
           id: string
           iron: number | null
+          magnesium: number | null
+          manganese: number | null
+          monounsaturated_fat: number | null
           name: string
+          niacin: number | null
           pending_contribution: boolean | null
+          phosphorus: number | null
+          polyunsaturated_fat: number | null
           potassium: number | null
           protein: number
+          retinol: number | null
+          riboflavin: number | null
           saturated_fat: number | null
+          selenium: number | null
           serving_size: string | null
           serving_size_grams: number | null
           sodium: number | null
           source: string
           sugar: number | null
+          thiamin: number | null
           trans_fat: number | null
           updated_at: string | null
           user_id: string | null
+          vitamin_a: number | null
+          vitamin_b12: number | null
+          vitamin_b6: number | null
+          vitamin_c: number | null
           vitamin_d: number | null
+          vitamin_e: number | null
+          vitamin_k: number | null
+          water_content: number | null
+          zinc: number | null
         }
         Insert: {
+          alcohol?: number | null
           barcode?: string | null
           brand?: string | null
+          caffeine?: number | null
           calcium?: number | null
           calories?: number
           carbs?: number
+          category?: string
           cholesterol?: number | null
+          choline?: number | null
           contributed_at?: string | null
           contribution_error?: string | null
           contribution_status?: string | null
+          copper?: number | null
           created_at?: string | null
           fat?: number
           fiber?: number | null
+          folate?: number | null
           id?: string
           iron?: number | null
+          magnesium?: number | null
+          manganese?: number | null
+          monounsaturated_fat?: number | null
           name: string
+          niacin?: number | null
           pending_contribution?: boolean | null
+          phosphorus?: number | null
+          polyunsaturated_fat?: number | null
           potassium?: number | null
           protein?: number
+          retinol?: number | null
+          riboflavin?: number | null
           saturated_fat?: number | null
+          selenium?: number | null
           serving_size?: string | null
           serving_size_grams?: number | null
           sodium?: number | null
           source?: string
           sugar?: number | null
+          thiamin?: number | null
           trans_fat?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vitamin_a?: number | null
+          vitamin_b12?: number | null
+          vitamin_b6?: number | null
+          vitamin_c?: number | null
           vitamin_d?: number | null
+          vitamin_e?: number | null
+          vitamin_k?: number | null
+          water_content?: number | null
+          zinc?: number | null
         }
         Update: {
+          alcohol?: number | null
           barcode?: string | null
           brand?: string | null
+          caffeine?: number | null
           calcium?: number | null
           calories?: number
           carbs?: number
+          category?: string
           cholesterol?: number | null
+          choline?: number | null
           contributed_at?: string | null
           contribution_error?: string | null
           contribution_status?: string | null
+          copper?: number | null
           created_at?: string | null
           fat?: number
           fiber?: number | null
+          folate?: number | null
           id?: string
           iron?: number | null
+          magnesium?: number | null
+          manganese?: number | null
+          monounsaturated_fat?: number | null
           name?: string
+          niacin?: number | null
           pending_contribution?: boolean | null
+          phosphorus?: number | null
+          polyunsaturated_fat?: number | null
           potassium?: number | null
           protein?: number
+          retinol?: number | null
+          riboflavin?: number | null
           saturated_fat?: number | null
+          selenium?: number | null
           serving_size?: string | null
           serving_size_grams?: number | null
           sodium?: number | null
           source?: string
           sugar?: number | null
+          thiamin?: number | null
           trans_fat?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vitamin_a?: number | null
+          vitamin_b12?: number | null
+          vitamin_b6?: number | null
+          vitamin_c?: number | null
           vitamin_d?: number | null
+          vitamin_e?: number | null
+          vitamin_k?: number | null
+          water_content?: number | null
+          zinc?: number | null
         }
         Relationships: []
       }

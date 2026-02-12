@@ -61,6 +61,17 @@ interface ManualTabProps {
   loading?: boolean
 }
 
+const INPUT_CLASS = 'border-[#1e293b] bg-[#020817] text-[#f8fafc]'
+
+function NutrientInput({ label, name, step = '0.1', register }: { label: string; name: keyof ManualFoodValues; step?: string; register: ReturnType<typeof useForm<ManualFoodValues>>['register'] }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[#94a3b8] text-xs">{label}</Label>
+      <Input type="number" step={step} {...register(name, { valueAsNumber: true })} placeholder="0" className={INPUT_CLASS} />
+    </div>
+  )
+}
+
 export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps) {
   const [moreOpen, setMoreOpen] = useState(false)
   const [extendedOpen, setExtendedOpen] = useState(false)
@@ -85,18 +96,8 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
     onSubmit(values)
   }
 
-  const inputClass = 'border-[#1e293b] bg-[#020817] text-[#f8fafc]'
   const errorClass = 'text-xs text-red-400 mt-1'
   const isSupplement = category === 'supplement'
-
-  function NutrientInput({ label, name, step = '0.1' }: { label: string; name: keyof ManualFoodValues; step?: string }) {
-    return (
-      <div className="space-y-1.5">
-        <Label className="text-[#94a3b8] text-xs">{label}</Label>
-        <Input type="number" step={step} {...register(name, { valueAsNumber: true })} placeholder="0" className={inputClass} />
-      </div>
-    )
-  }
 
   return (
     <form onSubmit={handleSubmit(onValid)} className="space-y-4">
@@ -137,13 +138,13 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
 
       <div className="space-y-1.5">
         <Label className="text-[#94a3b8]">Name</Label>
-        <Input {...register('name')} placeholder={isSupplement ? 'e.g., Daily Multivitamin' : 'e.g., My Smoothie'} className={inputClass} />
+        <Input {...register('name')} placeholder={isSupplement ? 'e.g., Daily Multivitamin' : 'e.g., My Smoothie'} className={INPUT_CLASS} />
         {errors.name && <p className={errorClass}>{errors.name.message}</p>}
       </div>
 
       <div className="space-y-1.5">
         <Label className="text-[#94a3b8]">Brand (optional)</Label>
-        <Input {...register('brand')} placeholder={isSupplement ? 'e.g., Nature Made' : 'e.g., Homemade'} className={inputClass} />
+        <Input {...register('brand')} placeholder={isSupplement ? 'e.g., Nature Made' : 'e.g., Homemade'} className={INPUT_CLASS} />
       </div>
 
       <div className="space-y-1.5">
@@ -161,32 +162,32 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
       {/* Primary fields: macros for food, vitamins/minerals for supplements */}
       {isSupplement ? (
         <div className="grid grid-cols-2 gap-3">
-          <NutrientInput label="Vitamin D (mcg)" name="vitamin_d" />
-          <NutrientInput label="Vitamin C (mg)" name="vitamin_c" />
-          <NutrientInput label="Vitamin B12 (mcg)" name="vitamin_b12" step="0.01" />
-          <NutrientInput label="Calcium (mg)" name="calcium" step="1" />
-          <NutrientInput label="Iron (mg)" name="iron" />
-          <NutrientInput label="Magnesium (mg)" name="magnesium" step="1" />
-          <NutrientInput label="Zinc (mg)" name="zinc" />
-          <NutrientInput label="Folate (mcg)" name="folate" step="1" />
+          <NutrientInput register={register} label="Vitamin D (mcg)" name="vitamin_d" />
+          <NutrientInput register={register} label="Vitamin C (mg)" name="vitamin_c" />
+          <NutrientInput register={register} label="Vitamin B12 (mcg)" name="vitamin_b12" step="0.01" />
+          <NutrientInput register={register} label="Calcium (mg)" name="calcium" step="1" />
+          <NutrientInput register={register} label="Iron (mg)" name="iron" />
+          <NutrientInput register={register} label="Magnesium (mg)" name="magnesium" step="1" />
+          <NutrientInput register={register} label="Zinc (mg)" name="zinc" />
+          <NutrientInput register={register} label="Folate (mcg)" name="folate" step="1" />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-[#94a3b8]">Calories</Label>
-            <Input type="number" {...register('calories', { valueAsNumber: true })} placeholder="0" className={inputClass} />
+            <Input type="number" {...register('calories', { valueAsNumber: true })} placeholder="0" className={INPUT_CLASS} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[#94a3b8]">Protein (g)</Label>
-            <Input type="number" step="0.1" {...register('protein', { valueAsNumber: true })} placeholder="0" className={inputClass} />
+            <Input type="number" step="0.1" {...register('protein', { valueAsNumber: true })} placeholder="0" className={INPUT_CLASS} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[#94a3b8]">Carbs (g)</Label>
-            <Input type="number" step="0.1" {...register('carbs', { valueAsNumber: true })} placeholder="0" className={inputClass} />
+            <Input type="number" step="0.1" {...register('carbs', { valueAsNumber: true })} placeholder="0" className={INPUT_CLASS} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[#94a3b8]">Fat (g)</Label>
-            <Input type="number" step="0.1" {...register('fat', { valueAsNumber: true })} placeholder="0" className={inputClass} />
+            <Input type="number" step="0.1" {...register('fat', { valueAsNumber: true })} placeholder="0" className={INPUT_CLASS} />
           </div>
         </div>
       )}
@@ -206,28 +207,28 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
             </CollapsibleTrigger>
             <CollapsibleContent ref={moreRef} className="space-y-4 pt-2">
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Vitamin A (mcg)" name="vitamin_a" />
-                <NutrientInput label="Vitamin E (mg)" name="vitamin_e" />
-                <NutrientInput label="Vitamin K (mcg)" name="vitamin_k" />
+                <NutrientInput register={register} label="Vitamin A (mcg)" name="vitamin_a" />
+                <NutrientInput register={register} label="Vitamin E (mg)" name="vitamin_e" />
+                <NutrientInput register={register} label="Vitamin K (mcg)" name="vitamin_k" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Thiamin (mg)" name="thiamin" step="0.01" />
-                <NutrientInput label="Riboflavin (mg)" name="riboflavin" step="0.01" />
-                <NutrientInput label="Niacin (mg)" name="niacin" />
+                <NutrientInput register={register} label="Thiamin (mg)" name="thiamin" step="0.01" />
+                <NutrientInput register={register} label="Riboflavin (mg)" name="riboflavin" step="0.01" />
+                <NutrientInput register={register} label="Niacin (mg)" name="niacin" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="B6 (mg)" name="vitamin_b6" step="0.01" />
-                <NutrientInput label="Choline (mg)" name="choline" step="1" />
-                <NutrientInput label="Potassium (mg)" name="potassium" step="1" />
+                <NutrientInput register={register} label="B6 (mg)" name="vitamin_b6" step="0.01" />
+                <NutrientInput register={register} label="Choline (mg)" name="choline" step="1" />
+                <NutrientInput register={register} label="Potassium (mg)" name="potassium" step="1" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Selenium (mcg)" name="selenium" />
-                <NutrientInput label="Copper (mg)" name="copper" step="0.01" />
-                <NutrientInput label="Phosphorus (mg)" name="phosphorus" step="1" />
+                <NutrientInput register={register} label="Selenium (mcg)" name="selenium" />
+                <NutrientInput register={register} label="Copper (mg)" name="copper" step="0.01" />
+                <NutrientInput register={register} label="Phosphorus (mg)" name="phosphorus" step="1" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Manganese (mg)" name="manganese" step="0.01" />
-                <NutrientInput label="Sodium (mg)" name="sodium" step="1" />
+                <NutrientInput register={register} label="Manganese (mg)" name="manganese" step="0.01" />
+                <NutrientInput register={register} label="Sodium (mg)" name="sodium" step="1" />
                 <div />
               </div>
             </CollapsibleContent>
@@ -245,15 +246,15 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
             </CollapsibleTrigger>
             <CollapsibleContent ref={extendedRef} className="space-y-3 pt-2">
               <div className="grid grid-cols-2 gap-3">
-                <NutrientInput label="Calories" name="calories" step="1" />
-                <NutrientInput label="Protein (g)" name="protein" />
-                <NutrientInput label="Carbs (g)" name="carbs" />
-                <NutrientInput label="Fat (g)" name="fat" />
+                <NutrientInput register={register} label="Calories" name="calories" step="1" />
+                <NutrientInput register={register} label="Protein (g)" name="protein" />
+                <NutrientInput register={register} label="Carbs (g)" name="carbs" />
+                <NutrientInput register={register} label="Fat (g)" name="fat" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Fiber (g)" name="fiber" />
-                <NutrientInput label="Sugar (g)" name="sugar" />
-                <NutrientInput label="Cholesterol (mg)" name="cholesterol" step="1" />
+                <NutrientInput register={register} label="Fiber (g)" name="fiber" />
+                <NutrientInput register={register} label="Sugar (g)" name="sugar" />
+                <NutrientInput register={register} label="Cholesterol (mg)" name="cholesterol" step="1" />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -273,22 +274,22 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
             </CollapsibleTrigger>
             <CollapsibleContent ref={moreRef} className="space-y-3 pt-2">
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Fiber (g)" name="fiber" />
-                <NutrientInput label="Sugar (g)" name="sugar" />
-                <NutrientInput label="Sodium (mg)" name="sodium" step="1" />
+                <NutrientInput register={register} label="Fiber (g)" name="fiber" />
+                <NutrientInput register={register} label="Sugar (g)" name="sugar" />
+                <NutrientInput register={register} label="Sodium (mg)" name="sodium" step="1" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Sat. Fat (g)" name="saturated_fat" />
-                <NutrientInput label="Trans Fat (g)" name="trans_fat" />
-                <NutrientInput label="Cholesterol (mg)" name="cholesterol" step="1" />
+                <NutrientInput register={register} label="Sat. Fat (g)" name="saturated_fat" />
+                <NutrientInput register={register} label="Trans Fat (g)" name="trans_fat" />
+                <NutrientInput register={register} label="Cholesterol (mg)" name="cholesterol" step="1" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Potassium (mg)" name="potassium" step="1" />
-                <NutrientInput label="Vitamin D (mcg)" name="vitamin_d" />
-                <NutrientInput label="Calcium (mg)" name="calcium" step="1" />
+                <NutrientInput register={register} label="Potassium (mg)" name="potassium" step="1" />
+                <NutrientInput register={register} label="Vitamin D (mcg)" name="vitamin_d" />
+                <NutrientInput register={register} label="Calcium (mg)" name="calcium" step="1" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Iron (mg)" name="iron" />
+                <NutrientInput register={register} label="Iron (mg)" name="iron" />
                 <div />
                 <div />
               </div>
@@ -308,43 +309,43 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
             <CollapsibleContent ref={extendedRef} className="space-y-4 pt-2">
               <p className="text-xs font-medium text-[#64748b] uppercase tracking-wider">Vitamins</p>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Vitamin A (mcg)" name="vitamin_a" />
-                <NutrientInput label="Vitamin C (mg)" name="vitamin_c" />
-                <NutrientInput label="Vitamin E (mg)" name="vitamin_e" />
+                <NutrientInput register={register} label="Vitamin A (mcg)" name="vitamin_a" />
+                <NutrientInput register={register} label="Vitamin C (mg)" name="vitamin_c" />
+                <NutrientInput register={register} label="Vitamin E (mg)" name="vitamin_e" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Vitamin K (mcg)" name="vitamin_k" />
-                <NutrientInput label="Thiamin (mg)" name="thiamin" step="0.01" />
-                <NutrientInput label="Riboflavin (mg)" name="riboflavin" step="0.01" />
+                <NutrientInput register={register} label="Vitamin K (mcg)" name="vitamin_k" />
+                <NutrientInput register={register} label="Thiamin (mg)" name="thiamin" step="0.01" />
+                <NutrientInput register={register} label="Riboflavin (mg)" name="riboflavin" step="0.01" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Niacin (mg)" name="niacin" />
-                <NutrientInput label="B6 (mg)" name="vitamin_b6" step="0.01" />
-                <NutrientInput label="B12 (mcg)" name="vitamin_b12" step="0.01" />
+                <NutrientInput register={register} label="Niacin (mg)" name="niacin" />
+                <NutrientInput register={register} label="B6 (mg)" name="vitamin_b6" step="0.01" />
+                <NutrientInput register={register} label="B12 (mcg)" name="vitamin_b12" step="0.01" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Folate (mcg)" name="folate" step="1" />
-                <NutrientInput label="Choline (mg)" name="choline" step="1" />
+                <NutrientInput register={register} label="Folate (mcg)" name="folate" step="1" />
+                <NutrientInput register={register} label="Choline (mg)" name="choline" step="1" />
                 <div />
               </div>
 
               <p className="text-xs font-medium text-[#64748b] uppercase tracking-wider">Minerals</p>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Magnesium (mg)" name="magnesium" step="1" />
-                <NutrientInput label="Zinc (mg)" name="zinc" />
-                <NutrientInput label="Selenium (mcg)" name="selenium" />
+                <NutrientInput register={register} label="Magnesium (mg)" name="magnesium" step="1" />
+                <NutrientInput register={register} label="Zinc (mg)" name="zinc" />
+                <NutrientInput register={register} label="Selenium (mcg)" name="selenium" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Copper (mg)" name="copper" step="0.01" />
-                <NutrientInput label="Phosphorus (mg)" name="phosphorus" step="1" />
-                <NutrientInput label="Manganese (mg)" name="manganese" step="0.01" />
+                <NutrientInput register={register} label="Copper (mg)" name="copper" step="0.01" />
+                <NutrientInput register={register} label="Phosphorus (mg)" name="phosphorus" step="1" />
+                <NutrientInput register={register} label="Manganese (mg)" name="manganese" step="0.01" />
               </div>
 
               <p className="text-xs font-medium text-[#64748b] uppercase tracking-wider">Other</p>
               <div className="grid grid-cols-3 gap-3">
-                <NutrientInput label="Caffeine (mg)" name="caffeine" step="1" />
-                <NutrientInput label="Mono. Fat (g)" name="monounsaturated_fat" />
-                <NutrientInput label="Poly. Fat (g)" name="polyunsaturated_fat" />
+                <NutrientInput register={register} label="Caffeine (mg)" name="caffeine" step="1" />
+                <NutrientInput register={register} label="Mono. Fat (g)" name="monounsaturated_fat" />
+                <NutrientInput register={register} label="Poly. Fat (g)" name="polyunsaturated_fat" />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -354,7 +355,7 @@ export function ManualTab({ initialBarcode, onSubmit, loading }: ManualTabProps)
       {initialBarcode && (
         <div className="space-y-1.5">
           <Label className="text-[#94a3b8]">Barcode</Label>
-          <Input {...register('barcode')} readOnly className={`${inputClass} opacity-60`} />
+          <Input {...register('barcode')} readOnly className={`${INPUT_CLASS} opacity-60`} />
         </div>
       )}
 
