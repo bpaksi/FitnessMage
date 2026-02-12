@@ -58,6 +58,7 @@ export default function FoodsPage() {
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'food' | 'supplement'>('all')
   const [barcodeInput, setBarcodeInput] = useState('')
   const [barcodeResult, setBarcodeResult] = useState<unknown>(null)
+  const [barcodeMainResult, setBarcodeMainResult] = useState<unknown>(null)
   const [barcodeLoading, setBarcodeLoading] = useState(false)
 
   const filtered = useMemo(() => {
@@ -196,10 +197,16 @@ export default function FoodsPage() {
     if (!barcodeInput.trim()) return
     setBarcodeLoading(true)
     setBarcodeResult(null)
+    setBarcodeMainResult(null)
+    const code = encodeURIComponent(barcodeInput.trim())
     try {
-      const res = await fetch(`/api/foods/barcode/debug?code=${encodeURIComponent(barcodeInput.trim())}`)
-      const data = await res.json()
-      setBarcodeResult(data)
+      const [debugRes, mainRes] = await Promise.all([
+        fetch(`/api/foods/barcode/debug?code=${code}`),
+        fetch(`/api/foods/barcode?code=${code}`),
+      ])
+      const [debugData, mainData] = await Promise.all([debugRes.json(), mainRes.json()])
+      setBarcodeResult(debugData)
+      setBarcodeMainResult(mainData)
     } catch (e) {
       setBarcodeResult({ error: e instanceof Error ? e.message : 'Request failed' })
     } finally {
@@ -477,9 +484,21 @@ export default function FoodsPage() {
             </Button>
           </div>
 
+          {barcodeMainResult != null && (
+            <Card className="border-[#1e293b] bg-[#0f172a]">
+              <CardContent className="p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#f8fafc]">Scan Result (what mobile sees)</p>
+                <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
+                  {JSON.stringify(barcodeMainResult, null, 2)}
+                </pre>
+              </CardContent>
+            </Card>
+          )}
+
           {barcodeResult != null && (
             <Card className="border-[#1e293b] bg-[#0f172a]">
               <CardContent className="p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#64748b]">Debug (all sources)</p>
                 <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap text-xs text-[#94a3b8]">
                   {JSON.stringify(barcodeResult, null, 2)}
                 </pre>

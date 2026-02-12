@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         const upcResults = await searchUSDA(code, apiKey)
         usdaByUpc = upcResults
         let results = upcResults
-        if (results.length === 0 && offProduct?.product_name && !supplement) {
+        if (results.length === 0 && offProduct?.product_name) {
           const nameResults = await searchUSDA(offProduct.product_name as string, apiKey)
           usdaByName = nameResults
           results = nameResults
