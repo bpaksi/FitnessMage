@@ -15,6 +15,7 @@ export function QrScanner({ onScan, onError, onTimeout }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval>>(null)
+  const metaTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
   const scannedRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const [scanning, setScanning] = useState(false)
@@ -24,9 +25,17 @@ export function QrScanner({ onScan, onError, onTimeout }: QrScannerProps) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
+    if (metaTimerRef.current) {
+      clearTimeout(metaTimerRef.current)
+      metaTimerRef.current = null
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
+    }
+    if (videoRef.current) {
+      videoRef.current.onloadedmetadata = null
+      videoRef.current.srcObject = null
     }
   }, [])
 
@@ -83,8 +92,17 @@ export function QrScanner({ onScan, onError, onTimeout }: QrScannerProps) {
         // Wait for stream metadata before playing — prevents hang on mobile Safari
         if (video.readyState < video.HAVE_METADATA) {
           await new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error('Camera stream timed out')), 10_000)
-            video.onloadedmetadata = () => { clearTimeout(timer); resolve() }
+            metaTimerRef.current = setTimeout(() => {
+              metaTimerRef.current = null
+              reject(new Error('Camera stream timed out'))
+            }, 10_000)
+            video.onloadedmetadata = () => {
+              if (metaTimerRef.current) {
+                clearTimeout(metaTimerRef.current)
+                metaTimerRef.current = null
+              }
+              resolve()
+            }
           })
         }
         await video.play()
