@@ -1,5 +1,7 @@
 # FitnessMage — Project Conventions
 
+See [AGENTS.md](AGENTS.md#agentic-sdlc) — Agentic SDLC rules apply to all changes.
+
 ## Tech Stack
 
 - Next.js 16.1.6 (App Router, `src/` directory)

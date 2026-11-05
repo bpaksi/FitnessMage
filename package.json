@@ -46,14 +46,6 @@
     "vaul": "^1.1.2",
     "zod": "^4.3.6"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "msw",
-      "sharp",
-      "supabase",
-      "unrs-resolver"
-    ]
-  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
