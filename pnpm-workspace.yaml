@@ -1,0 +1,10 @@
+onlyBuiltDependencies:
+  - msw
+  - sharp
+  - supabase
+  - unrs-resolver
+allowBuilds:
+  msw: true
+  sharp: true
+  supabase: true
+  unrs-resolver: true
